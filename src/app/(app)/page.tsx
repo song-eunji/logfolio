@@ -15,6 +15,7 @@ import { ShareToggle } from "@/components/portfolio/ShareToggle";
 import { CombinedPortfolioGenerator } from "@/components/portfolio/CombinedPortfolioGenerator";
 import { ProjectSwitcher } from "@/components/project/ProjectSwitcher";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
 import { useProjects } from "@/hooks/use-projects";
@@ -173,16 +174,24 @@ export default function Home() {
 
   if (!projectsLoaded || !store.hydrated) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <p className="text-sm text-muted-foreground">불러오는 중...</p>
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-7 w-2/3" />
+          <Skeleton className="h-4 w-1/3" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-80 rounded-lg" />
+          <Skeleton className="h-80 rounded-lg" />
+        </div>
+        <Skeleton className="h-32 rounded-lg" />
       </main>
     );
   }
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
-      <section className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
+      <section className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold text-foreground">
             매일 3줄만 남기면, AI가 포트폴리오로 만들어드려요
           </h1>
@@ -193,18 +202,20 @@ export default function Home() {
             onCreate={createProject}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <p className="text-sm text-muted-foreground">
             {store.logs.length}개의 기록이 쌓였어요. 기록이 쌓일수록 더 풍부한
             포트폴리오가 만들어집니다.
           </p>
           {activeProject && (
-            <input
-              value={activeProject.name}
-              onChange={(e) => renameProject(activeProject.id, e.target.value)}
-              className="rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-muted-foreground hover:border-input focus:border-input focus:outline-none"
-              aria-label="프로젝트 이름 수정"
-            />
+            <label className="flex items-center gap-1 text-xs text-muted-foreground">
+              프로젝트 이름:
+              <input
+                value={activeProject.name}
+                onChange={(e) => renameProject(activeProject.id, e.target.value)}
+                className="rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-foreground hover:border-input focus:border-input focus:outline-none"
+              />
+            </label>
           )}
         </div>
       </section>
