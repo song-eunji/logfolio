@@ -77,7 +77,7 @@ export function useLogStore() {
           .order("log_date", { ascending: true }),
         supabase
           .from("portfolios")
-          .select("id, project_id, project_name, content, generation_source, kind, meta, created_at")
+          .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
           .eq("project_id", projectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
@@ -220,6 +220,33 @@ export function useLogStore() {
     [state.projectId, state.projectName, supabase]
   );
 
+  const togglePublic = useCallback(
+    async (portfolioId: string, isPublic: boolean) => {
+      setState((s) => ({
+        ...s,
+        portfolios: s.portfolios.map((p) =>
+          p.id === portfolioId ? { ...p, isPublic } : p
+        ),
+      }));
+      const { error } = await supabase
+        .from("portfolios")
+        .update({ is_public: isPublic })
+        .eq("id", portfolioId);
+      if (error) {
+        console.error("[use-log-store] togglePublic failed", error);
+        setState((s) => ({
+          ...s,
+          portfolios: s.portfolios.map((p) =>
+            p.id === portfolioId ? { ...p, isPublic: !isPublic } : p
+          ),
+        }));
+        return false;
+      }
+      return true;
+    },
+    [supabase]
+  );
+
   return {
     hydrated,
     projectId: state.projectId ?? "",
@@ -231,6 +258,7 @@ export function useLogStore() {
     importCommitAsLog,
     portfolios: state.portfolios,
     savePortfolio,
+    togglePublic,
     importedShas: new Set(
       state.logs
         .filter((l) => l.source === "github" && l.sourceMeta?.sha)

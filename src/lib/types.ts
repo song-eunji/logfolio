@@ -51,5 +51,6 @@ export interface Portfolio {
   generationSource: GenerationSource;
   kind: OutputKind;
   meta: CoverLetterMeta | null;
+  isPublic: boolean;
   createdAt: string;
 }

@@ -11,6 +11,7 @@ import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
 import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { ResumeGenerator } from "@/components/resume/ResumeGenerator";
 import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
+import { ShareToggle } from "@/components/portfolio/ShareToggle";
 import { Badge } from "@/components/ui/badge";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
@@ -227,22 +228,31 @@ export default function Home() {
             {store.portfolios.map((p) => (
               <li
                 key={p.id}
-                className="rounded-lg border border-border bg-card px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3"
               >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Badge variant="secondary" className="text-[11px]">
-                    {KIND_LABEL[p.kind]}
-                  </Badge>
-                  <p className="text-sm font-medium text-foreground">
-                    {p.kind === "cover_letter" && p.meta
-                      ? p.meta.question.slice(0, 30)
-                      : p.projectName}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <Badge variant="secondary" className="text-[11px]">
+                      {KIND_LABEL[p.kind]}
+                    </Badge>
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {p.kind === "cover_letter" && p.meta
+                        ? p.meta.question.slice(0, 30)
+                        : p.projectName}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(p.createdAt), "yyyy-MM-dd HH:mm")} ·{" "}
+                    {p.generationSource === "ai" ? "AI 생성" : "로컬 초안"}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(p.createdAt), "yyyy-MM-dd HH:mm")} ·{" "}
-                  {p.generationSource === "ai" ? "AI 생성" : "로컬 초안"}
-                </p>
+                {p.kind === "portfolio" && (
+                  <ShareToggle
+                    portfolioId={p.id}
+                    isPublic={p.isPublic}
+                    onToggle={store.togglePublic}
+                  />
+                )}
               </li>
             ))}
           </ul>

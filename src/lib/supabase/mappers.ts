@@ -34,6 +34,7 @@ export interface PortfolioRow {
   generation_source: "ai" | "local_fallback";
   kind: OutputKind;
   meta: CoverLetterMeta | null;
+  is_public: boolean;
   created_at: string;
 }
 
@@ -46,6 +47,7 @@ export function mapPortfolioRow(row: PortfolioRow): Portfolio {
     generationSource: row.generation_source,
     kind: row.kind,
     meta: row.meta,
+    isPublic: row.is_public,
     createdAt: row.created_at,
   };
 }
