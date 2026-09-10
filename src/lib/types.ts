@@ -23,6 +23,7 @@ export interface LogEntry {
 export interface Project {
   id: string;
   name: string;
+  description: string | null;
   createdAt: string;
 }
 

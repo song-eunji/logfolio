@@ -20,6 +20,7 @@ const logSchema = z.object({
 
 const bodySchema = z.object({
   projectName: z.string().min(1),
+  projectDescription: z.string().nullable().optional(),
   jobPosting: z.string().min(20, "채용공고 내용을 조금 더 자세히 붙여넣어주세요."),
   logs: z.array(logSchema).min(1, "참고할 기록이 없습니다."),
 });
@@ -32,9 +33,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "invalid_request", message }, { status: 422 });
   }
 
-  const { projectName, jobPosting, logs } = parsed.data;
+  const { projectName, projectDescription, jobPosting, logs } = parsed.data;
   const logsFormatted = formatLogsForPrompt(logs as LogEntry[]);
-  const prompt = buildJobMatchPrompt({ projectName, jobPosting, logsFormatted });
+  const prompt = buildJobMatchPrompt({
+    projectName,
+    projectDescription,
+    jobPosting,
+    logsFormatted,
+  });
 
   try {
     const markdown = await generateWithGemini(prompt, { allowResultRefs: false });

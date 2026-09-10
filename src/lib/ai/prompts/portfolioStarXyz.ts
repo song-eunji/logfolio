@@ -29,13 +29,18 @@ export function formatLogsForPrompt(logs: LogEntry[]) {
  */
 export function buildPortfolioPrompt(input: {
   projectName: string;
+  projectDescription?: string | null;
   logsFormatted: string;
   uploadedResultRefs?: string[];
 }) {
-  const { projectName, logsFormatted, uploadedResultRefs = [] } = input;
+  const { projectName, projectDescription, logsFormatted, uploadedResultRefs = [] } = input;
 
   return `아래는 "${projectName}" 기간 동안 매일 남긴 짧은 활동 기록입니다. 각 줄은 [날짜][분류] 텍스트 형식입니다.
-
+${
+  projectDescription
+    ? `\n이 프로젝트 자체에 대한 소개(사용자가 직접 작성한 고정 정보)는 다음과 같습니다:\n"""\n${projectDescription}\n"""\n`
+    : ""
+}
 이 기록을 바탕으로, 실제 채용 담당자가 읽는 포트폴리오처럼 **STAR 기법(상황-과제-행동-결과)**과 **정량적 성과 중심(XYZ 형식: "~함으로써 ~를 ~만큼 달성/개선")**으로 정리해주세요. 막연한 나열이 아니라 "무엇을 어떻게 해결했는지"가 드러나야 합니다.
 
 반드시 아래 마크다운 형식과 순서를 그대로 지켜 작성하세요. 제목을 바꾸거나 섹션을 생략하지 마세요.
@@ -43,7 +48,11 @@ export function buildPortfolioPrompt(input: {
 # ${projectName} 포트폴리오
 
 ## 프로젝트 개요
-- 기간: (기록 날짜 범위, 예: 07/10~07/13)
+${
+  projectDescription
+    ? "- 프로젝트 소개: (위에 주어진 프로젝트 소개를 1~2문장으로 자연스럽게 요약, 지어내지 말고 주어진 내용만 사용)\n"
+    : ""
+}- 기간: (기록 날짜 범위, 예: 07/10~07/13)
 - 활동 분류: (기록에 나온 분류 요약)
 
 ## 주요 활동
@@ -58,7 +67,7 @@ export function buildPortfolioPrompt(input: {
 (불릿 4~6개, "~함으로써 ~를 ~만큼" 형태 지향, 각 불릿도 배경과 과정을 살려 구체적으로)
 규칙:
 - 항목마다 근거가 된 날짜를 괄호로 표시 (예: (07/13))
-- 기록에 없는 사실·수치는 절대 만들어내지 말 것 — 없으면 정성적으로 서술
+- 기록(그리고 주어졌다면 프로젝트 소개)에 없는 사실·수치는 절대 만들어내지 말 것 — 없으면 정성적으로 서술
 ${
   uploadedResultRefs.length > 0
     ? `- 아래에 결과물 정보가 있으면 관련된 주요 활동의 결과(Result) 다음 줄에 해당 [[RESULT_번호]] 표시를 정확히 한 번 넣을 것\n- 결과물의 제작 내용과 실제 결과는 제공된 정보만 사용하고, 입력 없음인 내용은 추측하지 말 것\n`

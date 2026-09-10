@@ -68,13 +68,22 @@ export function CombinedPortfolioGenerator({
         return;
       }
 
-      const names = projects.filter((p) => selected.has(p.id)).map((p) => p.name);
+      const selectedProjects = projects.filter((p) => selected.has(p.id));
+      const names = selectedProjects.map((p) => p.name);
       const combinedName = `${names.join(" + ")} 통합`;
+      const combinedDescription = selectedProjects
+        .filter((p) => p.description)
+        .map((p) => `- ${p.name}: ${p.description}`)
+        .join("\n");
 
       const res = await fetch("/api/portfolio/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectName: combinedName, logs }),
+        body: JSON.stringify({
+          projectName: combinedName,
+          projectDescription: combinedDescription || null,
+          logs,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

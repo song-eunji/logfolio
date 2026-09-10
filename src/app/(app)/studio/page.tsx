@@ -9,6 +9,7 @@ import { ResumeGenerator } from "@/components/resume/ResumeGenerator";
 import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
 import { CombinedPortfolioGenerator } from "@/components/portfolio/CombinedPortfolioGenerator";
 import { JobMatchPortfolioGenerator } from "@/components/portfolio/JobMatchPortfolioGenerator";
+import { ProjectDescription } from "@/components/project/ProjectDescription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DismissibleBanner } from "@/components/onboarding/DismissibleBanner";
 import { useLogStore } from "@/hooks/use-log-store";
@@ -18,7 +19,12 @@ import { useAllUserOutputs } from "@/hooks/use-all-outputs";
 import type { GenerationSource } from "@/lib/types";
 
 export default function StudioPage() {
-  const { loaded: projectsLoaded, projects, activeProjectId } = useProjectsContext();
+  const {
+    loaded: projectsLoaded,
+    projects,
+    activeProjectId,
+    updateProjectDescription,
+  } = useProjectsContext();
   const store = useLogStore(activeProjectId);
   const { profile, updateProfile } = useProfile();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -44,7 +50,11 @@ export default function StudioPage() {
       const res = await fetch("/api/portfolio/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectName: activeProject.name, logs: store.logs }),
+        body: JSON.stringify({
+          projectName: activeProject.name,
+          projectDescription: activeProject.description,
+          logs: store.logs,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -168,6 +178,15 @@ export default function StudioPage() {
       <section>
         <ProfileSettings profile={profile} onSave={updateProfile} />
       </section>
+
+      {activeProject && (
+        <section>
+          <ProjectDescription
+            project={activeProject}
+            onSave={updateProjectDescription}
+          />
+        </section>
+      )}
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">

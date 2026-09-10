@@ -20,6 +20,7 @@ const logSchema = z.object({
 
 const bodySchema = z.object({
   projectName: z.string().min(1),
+  projectDescription: z.string().nullable().optional(),
   logs: z.array(logSchema).min(1, "기록된 로그가 없습니다."),
 });
 
@@ -32,9 +33,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "invalid_request", message }, { status: 422 });
   }
 
-  const { projectName, logs } = parsed.data;
+  const { projectName, projectDescription, logs } = parsed.data;
   const logsFormatted = formatLogsForPrompt(logs as LogEntry[]);
-  const prompt = buildPortfolioPrompt({ projectName, logsFormatted });
+  const prompt = buildPortfolioPrompt({ projectName, projectDescription, logsFormatted });
 
   try {
     const markdown = await generateWithGemini(prompt, { allowResultRefs: false });

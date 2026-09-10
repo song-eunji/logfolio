@@ -51,18 +51,34 @@ export function useProjects() {
       if (!user || cancelled) return;
       userIdRef.current = user.id;
 
-      const { data: rows } = await supabase
+      // description 컬럼이 아직 없는 DB(마이그레이션 0003 미적용)에서도 앱이
+      // 계속 동작하도록, 실패하면 예전 컬럼 구성으로 한 번 더 시도한다.
+      let { data: rows, error: selectError } = await supabase
         .from("projects")
-        .select("id, name, created_at")
+        .select("id, name, description, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
 
+      if (selectError) {
+        console.warn(
+          "[use-projects] description 컬럼 조회 실패 — 0003 마이그레이션 미적용으로 추정, 예전 컬럼으로 재시도",
+          selectError
+        );
+        const fallback = await supabase
+          .from("projects")
+          .select("id, name, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+        rows = (fallback.data ?? []).map((r) => ({ ...r, description: null }));
+        selectError = fallback.error;
+      }
+
       let list = rows ?? [];
-      if (list.length === 0) {
+      if (!selectError && list.length === 0) {
         const { data: created, error } = await supabase
           .from("projects")
           .insert({ user_id: user.id, name: DEFAULT_PROJECT_NAME })
-          .select("id, name, created_at")
+          .select("id, name, description, created_at")
           .single();
         if (error || !created) {
           console.error("[use-projects] failed to create default project", error);
@@ -75,6 +91,7 @@ export function useProjects() {
       const mapped = list.map((r) => ({
         id: r.id,
         name: r.name,
+        description: r.description ?? null,
         createdAt: r.created_at,
       }));
       setProjects(mapped);
@@ -98,13 +115,18 @@ export function useProjects() {
       const { data, error } = await supabase
         .from("projects")
         .insert({ user_id: userIdRef.current, name: name.trim() })
-        .select("id, name, created_at")
+        .select("id, name, description, created_at")
         .single();
       if (error || !data) {
         console.error("[use-projects] createProject failed", error);
         return null;
       }
-      const project: Project = { id: data.id, name: data.name, createdAt: data.created_at };
+      const project: Project = {
+        id: data.id,
+        name: data.name,
+        description: data.description ?? null,
+        createdAt: data.created_at,
+      };
       setProjects((p) => [...p, project]);
       setActiveProjectId(project.id);
       return project;
@@ -122,6 +144,22 @@ export function useProjects() {
     [supabase]
   );
 
+  const updateProjectDescription = useCallback(
+    async (id: string, description: string) => {
+      setProjects((p) => p.map((pr) => (pr.id === id ? { ...pr, description } : pr)));
+      const { error } = await supabase
+        .from("projects")
+        .update({ description })
+        .eq("id", id);
+      if (error) {
+        console.error("[use-projects] updateProjectDescription failed", error);
+        return false;
+      }
+      return true;
+    },
+    [supabase]
+  );
+
   return {
     loaded,
     projects,
@@ -129,5 +167,6 @@ export function useProjects() {
     setActiveProjectId,
     createProject,
     renameProject,
+    updateProjectDescription,
   };
 }

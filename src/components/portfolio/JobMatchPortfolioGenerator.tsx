@@ -73,7 +73,12 @@ export function JobMatchPortfolioGenerator({
       const res = await fetch("/api/portfolio/match-job", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectName: project.name, jobPosting, logs }),
+        body: JSON.stringify({
+          projectName: project.name,
+          projectDescription: project.description,
+          jobPosting,
+          logs,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
