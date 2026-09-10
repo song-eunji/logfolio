@@ -1,25 +1,21 @@
-import { getAnthropicClient, PORTFOLIO_MODEL } from "@/lib/anthropic/client";
+import { getGeminiClient, PORTFOLIO_MODEL } from "@/lib/gemini/client";
 import { sanitizePortfolioMarkdown } from "./sanitize";
 
-export async function generateWithClaude(
+export async function generateWithGemini(
   prompt: string,
   options: { allowResultRefs: boolean } = { allowResultRefs: false }
 ): Promise<string> {
-  const anthropic = getAnthropicClient();
+  const ai = getGeminiClient();
 
-  const message = await anthropic.messages.create({
+  const response = await ai.models.generateContent({
     model: PORTFOLIO_MODEL,
-    max_tokens: 4096,
-    messages: [{ role: "user", content: prompt }],
+    contents: prompt,
   });
 
-  const textBlock = message.content.find(
-    (block): block is Extract<typeof block, { type: "text" }> =>
-      block.type === "text"
-  );
-  if (!textBlock?.text) {
-    throw new Error("Claude 응답에서 텍스트를 찾지 못했습니다.");
+  const text = response.text;
+  if (!text) {
+    throw new Error("Gemini 응답에서 텍스트를 찾지 못했습니다.");
   }
 
-  return sanitizePortfolioMarkdown(textBlock.text, options);
+  return sanitizePortfolioMarkdown(text, options);
 }

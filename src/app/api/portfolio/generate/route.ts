@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildPortfolioPrompt, formatLogsForPrompt } from "@/lib/ai/prompts/portfolioStarXyz";
-import { generateWithClaude } from "@/lib/ai/generatePortfolio";
+import { generateWithGemini } from "@/lib/ai/generatePortfolio";
 import { buildLocalDraft } from "@/lib/ai/localDraft";
 import type { LogEntry } from "@/lib/types";
 
@@ -37,10 +37,10 @@ export async function POST(request: Request) {
   const prompt = buildPortfolioPrompt({ projectName, logsFormatted });
 
   try {
-    const markdown = await generateWithClaude(prompt, { allowResultRefs: false });
+    const markdown = await generateWithGemini(prompt, { allowResultRefs: false });
     return Response.json({ markdown, generationSource: "ai" as const });
   } catch (err) {
-    console.error("[api/portfolio/generate] Claude call failed, falling back to local draft", err);
+    console.error("[api/portfolio/generate] Gemini call failed, falling back to local draft", err);
     const markdown = buildLocalDraft({ projectName, logs: logs as LogEntry[] });
     return Response.json({ markdown, generationSource: "local_fallback" as const });
   }
