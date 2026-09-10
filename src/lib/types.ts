@@ -43,6 +43,12 @@ export interface CoverLetterMeta {
   charLimit: number;
 }
 
+export interface CombinedMeta {
+  combinedProjectNames: string[];
+}
+
+export type PortfolioMeta = CoverLetterMeta | CombinedMeta | Record<string, unknown>;
+
 export interface Portfolio {
   id: string;
   projectId: string;
@@ -50,7 +56,7 @@ export interface Portfolio {
   content: string;
   generationSource: GenerationSource;
   kind: OutputKind;
-  meta: CoverLetterMeta | null;
+  meta: PortfolioMeta | null;
   isPublic: boolean;
   createdAt: string;
 }

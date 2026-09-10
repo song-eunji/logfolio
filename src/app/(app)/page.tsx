@@ -12,10 +12,18 @@ import { ProfileSettings } from "@/components/profile/ProfileSettings";
 import { ResumeGenerator } from "@/components/resume/ResumeGenerator";
 import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
 import { ShareToggle } from "@/components/portfolio/ShareToggle";
+import { CombinedPortfolioGenerator } from "@/components/portfolio/CombinedPortfolioGenerator";
+import { ProjectSwitcher } from "@/components/project/ProjectSwitcher";
 import { Badge } from "@/components/ui/badge";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
-import type { GenerationSource, GithubCommit, OutputKind } from "@/lib/types";
+import { useProjects } from "@/hooks/use-projects";
+import type {
+  CoverLetterMeta,
+  GenerationSource,
+  GithubCommit,
+  OutputKind,
+} from "@/lib/types";
 
 const KIND_LABEL: Record<OutputKind, string> = {
   portfolio: "포트폴리오",
@@ -23,8 +31,14 @@ const KIND_LABEL: Record<OutputKind, string> = {
   cover_letter: "자소서",
 };
 
+function isCoverLetterMeta(meta: unknown): meta is CoverLetterMeta {
+  return !!meta && typeof meta === "object" && "question" in meta;
+}
+
 export default function Home() {
-  const store = useLogStore();
+  const { loaded: projectsLoaded, projects, activeProjectId, setActiveProjectId, createProject, renameProject } =
+    useProjects();
+  const store = useLogStore(activeProjectId);
   const { profile, updateProfile } = useProfile();
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
@@ -37,7 +51,10 @@ export default function Home() {
   const [genError, setGenError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
+
   async function handleGenerate() {
+    if (!activeProject) return;
     setGenerating(true);
     setGenError(null);
     setSaved(false);
@@ -46,7 +63,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectName: store.projectName,
+          projectName: activeProject.name,
           logs: store.logs,
         }),
       });
@@ -67,10 +84,11 @@ export default function Home() {
   }
 
   async function handleSave() {
-    if (!generation) return;
+    if (!generation || !activeProject) return;
     const result = await store.savePortfolio({
       content: generation.markdown,
       generationSource: generation.generationSource,
+      projectName: activeProject.name,
       kind: "portfolio",
     });
     if (!result) {
@@ -95,9 +113,11 @@ export default function Home() {
   }
 
   async function handleSaveResume(content: string) {
+    if (!activeProject) return false;
     const result = await store.savePortfolio({
       content,
       generationSource: "ai",
+      projectName: activeProject.name,
       kind: "resume",
     });
     return !!result;
@@ -107,16 +127,34 @@ export default function Home() {
     content: string,
     meta: { question: string; charLimit: number }
   ) {
+    if (!activeProject) return false;
     const result = await store.savePortfolio({
       content,
       generationSource: "ai",
+      projectName: activeProject.name,
       kind: "cover_letter",
       meta,
     });
     return !!result;
   }
 
-  if (!store.hydrated) {
+  async function handleSaveCombined(
+    content: string,
+    generationSource: GenerationSource,
+    combinedProjectNames: string[]
+  ) {
+    if (!activeProject) return false;
+    const result = await store.savePortfolio({
+      content,
+      generationSource,
+      projectName: `${combinedProjectNames.join(" + ")} 통합`,
+      kind: "portfolio",
+      meta: { combinedProjectNames },
+    });
+    return !!result;
+  }
+
+  if (!projectsLoaded || !store.hydrated) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
         <p className="text-sm text-muted-foreground">불러오는 중...</p>
@@ -129,20 +167,31 @@ export default function Home() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <section className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-bold text-foreground">
             매일 3줄만 남기면, AI가 포트폴리오로 만들어드려요
           </h1>
-          <input
-            value={store.projectName}
-            onChange={(e) => store.setProjectName(e.target.value)}
-            className="rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-sm font-medium text-foreground hover:border-input focus:border-input focus:outline-none"
+          <ProjectSwitcher
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onSelect={setActiveProjectId}
+            onCreate={createProject}
           />
         </div>
-        <p className="text-sm text-muted-foreground">
-          {store.logs.length}개의 기록이 쌓였어요. 기록이 쌓일수록 더 풍부한
-          포트폴리오가 만들어집니다.
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            {store.logs.length}개의 기록이 쌓였어요. 기록이 쌓일수록 더 풍부한
+            포트폴리오가 만들어집니다.
+          </p>
+          {activeProject && (
+            <input
+              value={activeProject.name}
+              onChange={(e) => renameProject(activeProject.id, e.target.value)}
+              className="rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-muted-foreground hover:border-input focus:border-input focus:outline-none"
+              aria-label="프로젝트 이름 수정"
+            />
+          )}
+        </div>
       </section>
 
       <section>
@@ -201,6 +250,11 @@ export default function Home() {
       </section>
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold text-foreground">통합 포트폴리오</h2>
+        <CombinedPortfolioGenerator projects={projects} onSave={handleSaveCombined} />
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-foreground">이력서 변환</h2>
         <ResumeGenerator
           portfolios={savedPortfolios}
@@ -236,7 +290,7 @@ export default function Home() {
                       {KIND_LABEL[p.kind]}
                     </Badge>
                     <p className="text-sm font-medium text-foreground truncate">
-                      {p.kind === "cover_letter" && p.meta
+                      {p.kind === "cover_letter" && isCoverLetterMeta(p.meta)
                         ? p.meta.question.slice(0, 30)
                         : p.projectName}
                     </p>

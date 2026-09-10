@@ -3,82 +3,52 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapLogRow, mapPortfolioRow, type LogRow, type PortfolioRow } from "@/lib/supabase/mappers";
-import type { CoverLetterMeta, GithubCommit, LogEntry, OutputKind, Portfolio } from "@/lib/types";
-
-const DEFAULT_PROJECT_NAME = "내 캠프 프로젝트";
+import type { GithubCommit, LogEntry, OutputKind, Portfolio, PortfolioMeta } from "@/lib/types";
 
 interface State {
-  projectId: string | null;
-  projectName: string;
   logs: LogEntry[];
   portfolios: Portfolio[];
 }
 
 /**
- * Supabase 기반 데이터 계층. 사용자당 "기본 프로젝트" 하나를 자동으로 찾거나 만들어
- * 그 프로젝트의 로그/포트폴리오를 관리한다 (멀티 프로젝트 대시보드는 이후 단계).
- * 이 훅이 반환하는 인터페이스는 이전 localStorage 버전과 동일하게 유지했다.
+ * Supabase 기반 데이터 계층. 주어진 projectId 하나의 로그/포트폴리오를 관리한다.
+ * 프로젝트 목록 자체는 useProjects가 담당한다 (관심사 분리).
  */
-export function useLogStore() {
-  const supabase = useRef(createClient()).current;
-  const [state, setState] = useState<State>({
-    projectId: null,
-    projectName: DEFAULT_PROJECT_NAME,
-    logs: [],
-    portfolios: [],
-  });
+export function useLogStore(projectId: string | null) {
+  const [supabase] = useState(() => createClient());
+  const [state, setState] = useState<State>({ logs: [], portfolios: [] });
   const [hydrated, setHydrated] = useState(false);
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!projectId) {
+      // 활성 프로젝트가 없어졌을 때(예: 전환 중) 이전 프로젝트의 데이터가 잠깐 보이지 않도록 비운다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({ logs: [], portfolios: [] });
+      setHydrated(false);
+      return;
+    }
+
     let cancelled = false;
 
-    async function bootstrap() {
+    async function load(currentProjectId: string) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user || cancelled) return;
       userIdRef.current = user.id;
 
-      let projectId: string;
-      let projectName: string;
-
-      const { data: existing } = await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (existing) {
-        projectId = existing.id;
-        projectName = existing.name;
-      } else {
-        const { data: created, error } = await supabase
-          .from("projects")
-          .insert({ user_id: user.id, name: DEFAULT_PROJECT_NAME })
-          .select("id, name")
-          .single();
-        if (error || !created) {
-          console.error("[use-log-store] failed to create default project", error);
-          return;
-        }
-        projectId = created.id;
-        projectName = created.name;
-      }
-
       const [{ data: logRows }, { data: portfolioRows }] = await Promise.all([
         supabase
           .from("logs")
           .select("id, project_id, log_date, category, content, source, source_meta, created_at")
-          .eq("project_id", projectId)
+          .eq("project_id", currentProjectId)
           .eq("user_id", user.id)
           .order("log_date", { ascending: true }),
         supabase
           .from("portfolios")
           .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
-          .eq("project_id", projectId)
+          .eq("project_id", currentProjectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
@@ -86,38 +56,26 @@ export function useLogStore() {
       if (cancelled) return;
 
       setState({
-        projectId,
-        projectName,
         logs: ((logRows ?? []) as LogRow[]).map(mapLogRow),
         portfolios: ((portfolioRows ?? []) as PortfolioRow[]).map(mapPortfolioRow),
       });
       setHydrated(true);
     }
 
-    bootstrap();
+    setHydrated(false);
+    load(projectId);
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const setProjectName = useCallback(
-    (name: string) => {
-      setState((s) => ({ ...s, projectName: name }));
-      if (state.projectId) {
-        supabase.from("projects").update({ name }).eq("id", state.projectId).then();
-      }
-    },
-    [state.projectId, supabase]
-  );
+  }, [projectId, supabase]);
 
   const addLog = useCallback(
     async (input: { logDate: string; category: string; content: string }) => {
-      if (!state.projectId || !userIdRef.current) return null;
+      if (!projectId || !userIdRef.current) return null;
       const { data, error } = await supabase
         .from("logs")
         .insert({
-          project_id: state.projectId,
+          project_id: projectId,
           user_id: userIdRef.current,
           log_date: input.logDate,
           category: input.category,
@@ -135,7 +93,7 @@ export function useLogStore() {
       setState((s) => ({ ...s, logs: [...s.logs, entry] }));
       return entry;
     },
-    [state.projectId, supabase]
+    [projectId, supabase]
   );
 
   const removeLog = useCallback(
@@ -150,7 +108,7 @@ export function useLogStore() {
   const importCommitAsLog = useCallback(
     async (input: { repo: string; commit: GithubCommit; category: string }) => {
       const { repo, commit, category } = input;
-      if (!state.projectId || !userIdRef.current) return { alreadyImported: false };
+      if (!projectId || !userIdRef.current) return { alreadyImported: false };
 
       const alreadyLocal = state.logs.some(
         (l) => l.source === "github" && l.sourceMeta?.sha === commit.sha
@@ -161,7 +119,7 @@ export function useLogStore() {
       const { data, error } = await supabase
         .from("logs")
         .insert({
-          project_id: state.projectId,
+          project_id: projectId,
           user_id: userIdRef.current,
           log_date: logDate,
           category,
@@ -184,29 +142,30 @@ export function useLogStore() {
       setState((s) => ({ ...s, logs: [...s.logs, entry] }));
       return { alreadyImported: false };
     },
-    [state.projectId, state.logs, supabase]
+    [projectId, state.logs, supabase]
   );
 
   const savePortfolio = useCallback(
     async (input: {
       content: string;
       generationSource: Portfolio["generationSource"];
+      projectName: string;
       kind?: OutputKind;
-      meta?: CoverLetterMeta | null;
+      meta?: PortfolioMeta | null;
     }) => {
-      if (!state.projectId || !userIdRef.current) return null;
+      if (!projectId || !userIdRef.current) return null;
       const { data, error } = await supabase
         .from("portfolios")
         .insert({
           user_id: userIdRef.current,
-          project_id: state.projectId,
-          project_name: state.projectName,
+          project_id: projectId,
+          project_name: input.projectName,
           content: input.content,
           generation_source: input.generationSource,
           kind: input.kind ?? "portfolio",
           meta: input.meta ?? null,
         })
-        .select("id, project_id, project_name, content, generation_source, kind, meta, created_at")
+        .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
         .single();
 
       if (error || !data) {
@@ -217,7 +176,7 @@ export function useLogStore() {
       setState((s) => ({ ...s, portfolios: [portfolio, ...s.portfolios] }));
       return portfolio;
     },
-    [state.projectId, state.projectName, supabase]
+    [projectId, supabase]
   );
 
   const togglePublic = useCallback(
@@ -249,9 +208,6 @@ export function useLogStore() {
 
   return {
     hydrated,
-    projectId: state.projectId ?? "",
-    projectName: state.projectName,
-    setProjectName,
     logs: state.logs,
     addLog,
     removeLog,
