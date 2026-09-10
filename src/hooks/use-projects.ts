@@ -5,17 +5,41 @@ import { createClient } from "@/lib/supabase/client";
 import type { Project } from "@/lib/types";
 
 const DEFAULT_PROJECT_NAME = "내 캠프 프로젝트";
+const ACTIVE_PROJECT_STORAGE_KEY = "logfolio:activeProjectId";
+
+function readStoredActiveProjectId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActiveProjectId(id: string) {
+  try {
+    window.localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, id);
+  } catch {
+    // 저장 실패해도 앱 동작에는 지장 없음 (세션 중 선택만 유지됨)
+  }
+}
 
 /**
  * 사용자의 프로젝트 목록을 관리한다. 프로젝트가 하나도 없으면 기본 프로젝트를
- * 자동으로 만들어준다 (기존 단일 프로젝트 동작과의 하위 호환).
+ * 자동으로 만들어준다. 선택된 프로젝트는 localStorage에 남겨서, 여러 페이지를
+ * 오가도(기록/AI 스튜디오/보관함) 같은 프로젝트를 계속 보게 한다.
  */
 export function useProjects() {
   const [supabase] = useState(() => createClient());
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectId, setActiveProjectIdState] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const userIdRef = useRef<string | null>(null);
+
+  const setActiveProjectId = useCallback((id: string) => {
+    setActiveProjectIdState(id);
+    writeStoredActiveProjectId(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +78,10 @@ export function useProjects() {
         createdAt: r.created_at,
       }));
       setProjects(mapped);
-      setActiveProjectId(mapped[0]?.id ?? null);
+
+      const stored = readStoredActiveProjectId();
+      const initial = mapped.find((p) => p.id === stored)?.id ?? mapped[0]?.id ?? null;
+      setActiveProjectIdState(initial);
       setLoaded(true);
     }
 
@@ -82,7 +109,7 @@ export function useProjects() {
       setActiveProjectId(project.id);
       return project;
     },
-    [supabase]
+    [supabase, setActiveProjectId]
   );
 
   const renameProject = useCallback(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Layers, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export function CombinedPortfolioGenerator({
     combinedProjectNames: string[]
   ) => Promise<boolean>;
 }) {
-  const supabase = useRef(createClient()).current;
+  const [supabase] = useState(() => createClient());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);

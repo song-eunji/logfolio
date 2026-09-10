@@ -1,9 +1,9 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { AlertTriangle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SlideViewer } from "@/components/share/SlideViewer";
+import { splitIntoSlides } from "@/lib/slides";
 import type { GenerationSource } from "@/lib/types";
 
 export function PortfolioViewer({
@@ -18,7 +18,7 @@ export function PortfolioViewer({
   saved?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {generationSource === "local_fallback" && (
         <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertTriangle className="size-4 mt-0.5 shrink-0" />
@@ -29,9 +29,7 @@ export function PortfolioViewer({
         </div>
       )}
 
-      <article className="prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-xl prose-h2:text-base prose-h2:mt-6 prose-h3:text-sm prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
-      </article>
+      <SlideViewer slides={splitIntoSlides(markdown)} heading="미리보기" />
 
       {onSave && (
         <Button onClick={onSave} disabled={saved} className="self-end gap-1.5">

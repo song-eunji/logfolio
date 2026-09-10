@@ -5,6 +5,8 @@ import { GitCommit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CommitList } from "./CommitList";
+import { DEFAULT_CATEGORIES } from "@/lib/categories";
+import { cn } from "@/lib/utils";
 import type { GithubCommit } from "@/lib/types";
 
 type FetchState =
@@ -18,9 +20,10 @@ export function RepoImportForm({
   onImport,
 }: {
   importedShas: Set<string>;
-  onImport: (repo: string, commit: GithubCommit) => void;
+  onImport: (repo: string, commit: GithubCommit, category: string) => void;
 }) {
   const [repoInput, setRepoInput] = useState("");
+  const [category, setCategory] = useState<string>(DEFAULT_CATEGORIES[0]);
   const [state, setState] = useState<FetchState>({ status: "idle" });
 
   async function handleFetch() {
@@ -84,6 +87,26 @@ export function RepoImportForm({
         </Button>
       </div>
 
+      {state.status === "success" && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground mr-1">추가될 분류:</span>
+          {DEFAULT_CATEGORIES.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
+                category === c
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-foreground hover:bg-muted"
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
       {state.status === "error" && (
         <p className="text-sm text-destructive">{state.message}</p>
       )}
@@ -92,7 +115,7 @@ export function RepoImportForm({
         <CommitList
           commits={state.commits}
           importedShas={importedShas}
-          onImport={(commit) => onImport(repoKey, commit)}
+          onImport={(commit) => onImport(repoKey, commit, category)}
         />
       )}
     </div>
