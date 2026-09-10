@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Briefcase, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,15 @@ export function JobMatchPortfolioGenerator({
 }) {
   const [supabaseClient] = useState(() => createClient());
   const [selectedId, setSelectedId] = useState<string>(projects[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!projects.some((p) => p.id === selectedId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(projects[0]?.id ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects]);
+
   const [jobPosting, setJobPosting] = useState("");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +134,7 @@ export function JobMatchPortfolioGenerator({
 
       <Button
         onClick={handleGenerate}
-        disabled={generating || jobPosting.trim().length < 20}
+        disabled={generating || !selectedId || jobPosting.trim().length < 20}
         className="self-end gap-1.5"
       >
         {generating ? (

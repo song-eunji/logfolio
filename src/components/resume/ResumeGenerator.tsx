@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FileText, Loader2, Save, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,17 @@ export function ResumeGenerator({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    // portfolios는 비동기로 나중에 채워지거나(전체 프로젝트 fetch), 새로 저장되어
+    // 갱신될 수 있다. 현재 선택값이 더 이상 목록에 없으면(초기 빈 목록 포함) 첫
+    // 항목으로 다시 맞춘다 — 이게 없으면 "변환" 버튼이 조용히 아무 반응도 안 한다.
+    if (!portfolios.some((p) => p.id === selectedId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(portfolios[0]?.id ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolios]);
 
   if (portfolios.length === 0) {
     return (
@@ -113,7 +124,11 @@ export function ResumeGenerator({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleGenerate} disabled={loading} className="gap-1.5 shrink-0">
+        <Button
+          onClick={handleGenerate}
+          disabled={loading || !selectedId}
+          className="gap-1.5 shrink-0"
+        >
           {loading ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
