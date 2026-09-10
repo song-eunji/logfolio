@@ -36,11 +36,20 @@ export interface GithubCommit {
 
 export type GenerationSource = "ai" | "local_fallback";
 
+export type OutputKind = "portfolio" | "resume" | "cover_letter";
+
+export interface CoverLetterMeta {
+  question: string;
+  charLimit: number;
+}
+
 export interface Portfolio {
   id: string;
   projectId: string;
   projectName: string;
   content: string;
   generationSource: GenerationSource;
+  kind: OutputKind;
+  meta: CoverLetterMeta | null;
   createdAt: string;
 }

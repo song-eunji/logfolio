@@ -8,11 +8,23 @@ import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
 import { GenerateButton } from "@/components/portfolio/GenerateButton";
 import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
+import { ProfileSettings } from "@/components/profile/ProfileSettings";
+import { ResumeGenerator } from "@/components/resume/ResumeGenerator";
+import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
+import { Badge } from "@/components/ui/badge";
 import { useLogStore } from "@/hooks/use-log-store";
-import type { GenerationSource, GithubCommit } from "@/lib/types";
+import { useProfile } from "@/hooks/use-profile";
+import type { GenerationSource, GithubCommit, OutputKind } from "@/lib/types";
+
+const KIND_LABEL: Record<OutputKind, string> = {
+  portfolio: "포트폴리오",
+  resume: "이력서",
+  cover_letter: "자소서",
+};
 
 export default function Home() {
   const store = useLogStore();
+  const { profile, updateProfile } = useProfile();
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
@@ -58,6 +70,7 @@ export default function Home() {
     const result = await store.savePortfolio({
       content: generation.markdown,
       generationSource: generation.generationSource,
+      kind: "portfolio",
     });
     if (!result) {
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
@@ -80,6 +93,28 @@ export default function Home() {
     }
   }
 
+  async function handleSaveResume(content: string) {
+    const result = await store.savePortfolio({
+      content,
+      generationSource: "ai",
+      kind: "resume",
+    });
+    return !!result;
+  }
+
+  async function handleSaveCoverLetter(
+    content: string,
+    meta: { question: string; charLimit: number }
+  ) {
+    const result = await store.savePortfolio({
+      content,
+      generationSource: "ai",
+      kind: "cover_letter",
+      meta,
+    });
+    return !!result;
+  }
+
   if (!store.hydrated) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
@@ -87,6 +122,8 @@ export default function Home() {
       </main>
     );
   }
+
+  const savedPortfolios = store.portfolios.filter((p) => p.kind === "portfolio");
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
@@ -105,6 +142,10 @@ export default function Home() {
           {store.logs.length}개의 기록이 쌓였어요. 기록이 쌓일수록 더 풍부한
           포트폴리오가 만들어집니다.
         </p>
+      </section>
+
+      <section>
+        <ProfileSettings profile={profile} onSave={updateProfile} />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
@@ -158,10 +199,29 @@ export default function Home() {
         )}
       </section>
 
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold text-foreground">이력서 변환</h2>
+        <ResumeGenerator
+          portfolios={savedPortfolios}
+          profile={profile}
+          onSave={handleSaveResume}
+        />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold text-foreground">자소서 답변 생성</h2>
+        <CoverLetterForm
+          logs={store.logs}
+          portfolios={savedPortfolios}
+          profile={profile}
+          onSave={handleSaveCoverLetter}
+        />
+      </section>
+
       {store.portfolios.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold text-foreground">
-            저장된 포트폴리오
+            저장된 산출물
           </h2>
           <ul className="flex flex-col gap-2">
             {store.portfolios.map((p) => (
@@ -169,9 +229,16 @@ export default function Home() {
                 key={p.id}
                 className="rounded-lg border border-border bg-card px-4 py-3"
               >
-                <p className="text-sm font-medium text-foreground">
-                  {p.projectName}
-                </p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Badge variant="secondary" className="text-[11px]">
+                    {KIND_LABEL[p.kind]}
+                  </Badge>
+                  <p className="text-sm font-medium text-foreground">
+                    {p.kind === "cover_letter" && p.meta
+                      ? p.meta.question.slice(0, 30)
+                      : p.projectName}
+                  </p>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {format(new Date(p.createdAt), "yyyy-MM-dd HH:mm")} ·{" "}
                   {p.generationSource === "ai" ? "AI 생성" : "로컬 초안"}

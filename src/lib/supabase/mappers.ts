@@ -1,4 +1,4 @@
-import type { LogEntry, Portfolio } from "@/lib/types";
+import type { CoverLetterMeta, LogEntry, OutputKind, Portfolio } from "@/lib/types";
 
 // DB(snake_case) <-> 앱 타입(camelCase) 변환
 
@@ -32,6 +32,8 @@ export interface PortfolioRow {
   project_name: string;
   content: string;
   generation_source: "ai" | "local_fallback";
+  kind: OutputKind;
+  meta: CoverLetterMeta | null;
   created_at: string;
 }
 
@@ -42,6 +44,8 @@ export function mapPortfolioRow(row: PortfolioRow): Portfolio {
     projectName: row.project_name,
     content: row.content,
     generationSource: row.generation_source,
+    kind: row.kind,
+    meta: row.meta,
     createdAt: row.created_at,
   };
 }

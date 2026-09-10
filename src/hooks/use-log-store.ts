@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapLogRow, mapPortfolioRow, type LogRow, type PortfolioRow } from "@/lib/supabase/mappers";
-import type { GithubCommit, LogEntry, Portfolio } from "@/lib/types";
+import type { CoverLetterMeta, GithubCommit, LogEntry, OutputKind, Portfolio } from "@/lib/types";
 
 const DEFAULT_PROJECT_NAME = "내 캠프 프로젝트";
 
@@ -77,7 +77,7 @@ export function useLogStore() {
           .order("log_date", { ascending: true }),
         supabase
           .from("portfolios")
-          .select("id, project_id, project_name, content, generation_source, created_at")
+          .select("id, project_id, project_name, content, generation_source, kind, meta, created_at")
           .eq("project_id", projectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
@@ -188,7 +188,12 @@ export function useLogStore() {
   );
 
   const savePortfolio = useCallback(
-    async (input: { content: string; generationSource: Portfolio["generationSource"] }) => {
+    async (input: {
+      content: string;
+      generationSource: Portfolio["generationSource"];
+      kind?: OutputKind;
+      meta?: CoverLetterMeta | null;
+    }) => {
       if (!state.projectId || !userIdRef.current) return null;
       const { data, error } = await supabase
         .from("portfolios")
@@ -198,8 +203,10 @@ export function useLogStore() {
           project_name: state.projectName,
           content: input.content,
           generation_source: input.generationSource,
+          kind: input.kind ?? "portfolio",
+          meta: input.meta ?? null,
         })
-        .select("id, project_id, project_name, content, generation_source, created_at")
+        .select("id, project_id, project_name, content, generation_source, kind, meta, created_at")
         .single();
 
       if (error || !data) {
