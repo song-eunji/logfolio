@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
 import { useProjects } from "@/hooks/use-projects";
+import { useAllUserOutputs } from "@/hooks/use-all-outputs";
 import type {
   CoverLetterMeta,
   GenerationSource,
@@ -40,6 +41,9 @@ export default function Home() {
     useProjects();
   const store = useLogStore(activeProjectId);
   const { profile, updateProfile } = useProfile();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const allOutputs = useAllUserOutputs(refreshKey);
+  const bump = () => setRefreshKey((k) => k + 1);
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
@@ -96,7 +100,18 @@ export default function Home() {
       return;
     }
     setSaved(true);
+    bump();
     toast.success("포트폴리오가 저장되었습니다.");
+  }
+
+  async function handleAddLog(input: {
+    logDate: string;
+    category: string;
+    content: string;
+  }) {
+    const entry = await store.addLog(input);
+    if (entry) bump();
+    return entry;
   }
 
   async function handleImportCommit(repo: string, commit: GithubCommit) {
@@ -108,6 +123,7 @@ export default function Home() {
     if (alreadyImported) {
       toast.info("이미 기록에 추가된 커밋이에요.");
     } else {
+      bump();
       toast.success("커밋을 기록에 추가했어요.");
     }
   }
@@ -151,6 +167,7 @@ export default function Home() {
       kind: "portfolio",
       meta: { combinedProjectNames },
     });
+    if (result) bump();
     return !!result;
   }
 
@@ -161,8 +178,6 @@ export default function Home() {
       </main>
     );
   }
-
-  const savedPortfolios = store.portfolios.filter((p) => p.kind === "portfolio");
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
@@ -207,7 +222,7 @@ export default function Home() {
         <DayLogForm
           selectedDate={selectedDate}
           logs={store.logs}
-          onAdd={store.addLog}
+          onAdd={handleAddLog}
           onRemove={store.removeLog}
         />
       </section>
@@ -256,8 +271,11 @@ export default function Home() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-foreground">이력서 변환</h2>
+        <p className="text-xs text-muted-foreground -mt-2">
+          모든 프로젝트에 저장된 포트폴리오 중에서 골라 변환할 수 있어요.
+        </p>
         <ResumeGenerator
-          portfolios={savedPortfolios}
+          portfolios={allOutputs.portfolios}
           profile={profile}
           onSave={handleSaveResume}
         />
@@ -265,9 +283,12 @@ export default function Home() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-foreground">자소서 답변 생성</h2>
+        <p className="text-xs text-muted-foreground -mt-2">
+          모든 프로젝트의 기록과 포트폴리오를 통틀어 관련 경험을 찾아요.
+        </p>
         <CoverLetterForm
-          logs={store.logs}
-          portfolios={savedPortfolios}
+          logs={allOutputs.logs}
+          portfolios={allOutputs.portfolios}
           profile={profile}
           onSave={handleSaveCoverLetter}
         />
