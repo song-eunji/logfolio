@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { LogCalendar } from "@/components/calendar/LogCalendar";
 import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
@@ -60,6 +61,16 @@ export default function Home() {
       generationSource: generation.generationSource,
     });
     setSaved(true);
+    toast.success("포트폴리오가 저장되었습니다.");
+  }
+
+  function handleImportCommit(repo: string, commit: Parameters<typeof store.importCommitAsLog>[0]["commit"]) {
+    const { alreadyImported } = store.importCommitAsLog({ repo, commit, category: "개발" });
+    if (alreadyImported) {
+      toast.info("이미 기록에 추가된 커밋이에요.");
+    } else {
+      toast.success("커밋을 기록에 추가했어요.");
+    }
   }
 
   if (!store.hydrated) {
@@ -115,9 +126,7 @@ export default function Home() {
         <section>
           <RepoImportForm
             importedShas={store.importedShas}
-            onImport={(repo, commit) =>
-              store.importCommitAsLog({ repo, commit, category: "개발" })
-            }
+            onImport={handleImportCommit}
           />
         </section>
 
