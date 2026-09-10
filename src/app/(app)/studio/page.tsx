@@ -10,6 +10,7 @@ import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
 import { CombinedPortfolioGenerator } from "@/components/portfolio/CombinedPortfolioGenerator";
 import { JobMatchPortfolioGenerator } from "@/components/portfolio/JobMatchPortfolioGenerator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DismissibleBanner } from "@/components/onboarding/DismissibleBanner";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
 import { useProjectsContext } from "@/components/project/ProjectsProvider";
@@ -155,6 +156,14 @@ export default function StudioPage() {
           {" "}{store.logs.length}개의 기록
         </p>
       </section>
+
+      <DismissibleBanner storageKey="logfolio:studioIntroDismissed">
+        <p>
+          <strong className="font-semibold">AI 스튜디오</strong>에서는 기록을 포트폴리오로
+          생성하고, 여러 프로젝트를 하나로 합치거나, 채용공고에 맞춰 재구성하고, 이력서·자소서
+          로도 바꿀 수 있어요. 아래에서 하나씩 시도해보세요.
+        </p>
+      </DismissibleBanner>
 
       <section>
         <ProfileSettings profile={profile} onSave={updateProfile} />

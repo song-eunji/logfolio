@@ -7,13 +7,16 @@ import { LogCalendar } from "@/components/calendar/LogCalendar";
 import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useLogStore } from "@/hooks/use-log-store";
+import { useProfile } from "@/hooks/use-profile";
 import { useProjectsContext } from "@/components/project/ProjectsProvider";
 import type { GithubCommit } from "@/lib/types";
 
 export default function RecordPage() {
   const { loaded: projectsLoaded, activeProjectId } = useProjectsContext();
   const store = useLogStore(activeProjectId);
+  const { profile } = useProfile();
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
@@ -61,6 +64,18 @@ export default function RecordPage() {
           포트폴리오가 만들어집니다.
         </p>
       </section>
+
+      <OnboardingChecklist
+        items={[
+          { label: "오늘 기록 3줄 남기기", done: store.logs.length > 0 },
+          { label: "희망 직무 입력하기", done: !!profile.job, href: "/studio" },
+          {
+            label: "첫 포트폴리오 만들어보기",
+            done: store.portfolios.some((p) => p.kind === "portfolio"),
+            href: "/studio",
+          },
+        ]}
+      />
 
       <section className="grid gap-4 md:grid-cols-2">
         <LogCalendar

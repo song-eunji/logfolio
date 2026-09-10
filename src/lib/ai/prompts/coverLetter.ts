@@ -1,3 +1,5 @@
+// TODO(신뢰성): portfolioStarXyz.ts에 적어둔 "맥락 부풀리기" 문제 참고 —
+// 이 프롬프트도 원본 로그를 직접 다루므로 같이 점검할 것.
 export function buildCoverLetterPrompt(input: {
   question: string;
   charLimit: number;
