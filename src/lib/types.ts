@@ -1,3 +1,5 @@
+import type { PortfolioLayout } from "./slideLayout";
+
 export type LogCategory =
   | "개발"
   | "기획·문서"
@@ -60,4 +62,5 @@ export interface Portfolio {
   meta: PortfolioMeta | null;
   isPublic: boolean;
   createdAt: string;
+  layout: PortfolioLayout | null;
 }

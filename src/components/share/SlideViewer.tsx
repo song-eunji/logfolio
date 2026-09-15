@@ -1,43 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Printer,
-  FileText,
-  Target,
-  Trophy,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { classifySlideKind, type Slide, type SlideKind } from "@/lib/slides";
-
-const KIND_STYLE: Record<
-  SlideKind,
-  { icon: LucideIcon; label: string; text: string; bg: string; soft: string }
-> = {
-  hero: { icon: Sparkles, label: "", text: "text-primary", bg: "bg-primary", soft: "bg-primary/10" },
-  overview: { icon: FileText, label: "개요", text: "text-blue-600", bg: "bg-blue-500", soft: "bg-blue-50" },
-  activity: { icon: Target, label: "활동", text: "text-purple-600", bg: "bg-purple-500", soft: "bg-purple-50" },
-  summary: { icon: Trophy, label: "핵심 성과", text: "text-amber-600", bg: "bg-amber-500", soft: "bg-amber-50" },
-  generic: { icon: FileText, label: "", text: "text-muted-foreground", bg: "bg-muted-foreground", soft: "bg-muted" },
-};
+import { classifySlideKind, splitIntoSlides } from "@/lib/slides";
+import { KIND_STYLE } from "@/lib/slideKindStyle";
+import { resolveEditableSlides, DEFAULT_THEME, type PortfolioLayout } from "@/lib/slideLayout";
+import { SlideCanvas } from "@/components/portfolio/editor/SlideCanvas";
 
 export function SlideViewer({
-  slides,
+  content,
+  layout,
   heading,
 }: {
-  slides: Slide[];
+  content: string;
+  layout?: PortfolioLayout | null;
   heading: string;
 }) {
   const [index, setIndex] = useState(0);
-  const slide = slides[index];
-  const kind = classifySlideKind(slide);
+  const markdownSlides = useMemo(() => splitIntoSlides(content), [content]);
+  const slides = useMemo(
+    () => resolveEditableSlides(markdownSlides, layout),
+    [markdownSlides, layout]
+  );
+  const canvasMode = !!layout;
+  const slide = slides[Math.min(index, slides.length - 1)];
+  const kind = canvasMode ? slide.kind : classifySlideKind({ title: slide.title, body: slide.body, level: 2 });
   const style = KIND_STYLE[kind];
   const Icon = style.icon;
 
@@ -65,42 +56,58 @@ export function SlideViewer({
         </Button>
       </div>
 
-      <div className="min-h-[420px] overflow-hidden rounded-lg border border-border bg-card">
-        <div className={cn("h-1.5 w-full", style.bg)} />
+      {canvasMode ? (
+        <div className="overflow-x-auto rounded-lg">
+          <SlideCanvas
+            slide={slide}
+            layout={layout!}
+            theme={layout!.theme ?? DEFAULT_THEME}
+            editable={false}
+            selectedBlock={null}
+            onSelectBlock={() => {}}
+            onDragStart={() => {}}
+            onBlockCommit={() => {}}
+            onTextCommit={() => {}}
+          />
+        </div>
+      ) : (
+        <div className="min-h-[420px] overflow-hidden rounded-lg border border-border bg-card">
+          <div className={cn("h-1.5 w-full", style.bg)} />
 
-        {kind === "hero" ? (
-          <div className="flex min-h-[380px] flex-col items-center justify-center gap-3 px-8 py-16 text-center">
-            <div className={cn("flex size-12 items-center justify-center rounded-full", style.soft)}>
-              <Sparkles className={cn("size-6", style.text)} />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
-              {slide.title}
-            </h2>
-            <p className="text-sm text-muted-foreground">AI가 기록을 바탕으로 재구성한 포트폴리오</p>
-          </div>
-        ) : (
-          <div className="p-8 sm:p-12">
-            {slide.title && (
-              <div className="mb-5 flex items-center gap-2">
-                <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", style.soft)}>
-                  <Icon className={cn("size-4", style.text)} />
-                </span>
-                <div>
-                  {style.label && (
-                    <p className={cn("text-[11px] font-semibold uppercase tracking-wide", style.text)}>
-                      {style.label}
-                    </p>
-                  )}
-                  <h2 className="text-lg font-bold text-foreground sm:text-xl">{slide.title}</h2>
-                </div>
+          {kind === "hero" ? (
+            <div className="flex min-h-[380px] flex-col items-center justify-center gap-3 px-8 py-16 text-center">
+              <div className={cn("flex size-12 items-center justify-center rounded-full", style.soft)}>
+                <Sparkles className={cn("size-6", style.text)} />
               </div>
-            )}
-            <article className="prose prose-sm sm:prose-base max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-h3:text-base">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{slide.body}</ReactMarkdown>
-            </article>
-          </div>
-        )}
-      </div>
+              <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+                {slide.title}
+              </h2>
+              <p className="text-sm text-muted-foreground">AI가 기록을 바탕으로 재구성한 포트폴리오</p>
+            </div>
+          ) : (
+            <div className="p-8 sm:p-12">
+              {slide.title && (
+                <div className="mb-5 flex items-center gap-2">
+                  <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", style.soft)}>
+                    <Icon className={cn("size-4", style.text)} />
+                  </span>
+                  <div>
+                    {style.label && (
+                      <p className={cn("text-[11px] font-semibold uppercase tracking-wide", style.text)}>
+                        {style.label}
+                      </p>
+                    )}
+                    <h2 className="text-lg font-bold text-foreground sm:text-xl">{slide.title}</h2>
+                  </div>
+                </div>
+              )}
+              <article className="prose prose-sm sm:prose-base max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-h3:text-base">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{slide.body}</ReactMarkdown>
+              </article>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between print:hidden">
         <Button

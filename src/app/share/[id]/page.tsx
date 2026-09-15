@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { splitIntoSlides } from "@/lib/slides";
 import { SlideViewer } from "@/components/share/SlideViewer";
 import { DocumentViewer } from "@/components/share/DocumentViewer";
 import { Sparkles } from "lucide-react";
@@ -24,12 +23,23 @@ export default async function SharePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: output } = await supabase
+  let { data: output } = await supabase
     .from("portfolios")
-    .select("project_name, content, kind, meta, is_public, created_at")
+    .select("project_name, content, kind, meta, is_public, created_at, layout")
     .eq("id", id)
     .eq("is_public", true)
     .maybeSingle();
+
+  if (!output) {
+    // layout 컬럼이 아직 없는 DB(마이그레이션 0004 미적용)에서도 공유 링크는 보이도록 재시도
+    const fallback = await supabase
+      .from("portfolios")
+      .select("project_name, content, kind, meta, is_public, created_at")
+      .eq("id", id)
+      .eq("is_public", true)
+      .maybeSingle();
+    output = fallback.data ? { ...fallback.data, layout: null } : null;
+  }
 
   if (!output) {
     notFound();
@@ -51,7 +61,8 @@ export default async function SharePage({
       <main className="mx-auto max-w-3xl px-4 py-8">
         {output.kind === "portfolio" ? (
           <SlideViewer
-            slides={splitIntoSlides(output.content)}
+            content={output.content}
+            layout={output.layout}
             heading={output.project_name}
           />
         ) : (

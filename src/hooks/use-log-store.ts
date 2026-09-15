@@ -38,7 +38,7 @@ export function useLogStore(projectId: string | null) {
       if (!user || cancelled) return;
       userIdRef.current = user.id;
 
-      const [{ data: logRows }, { data: portfolioRows }] = await Promise.all([
+      const [{ data: logRows }, portfolioResult] = await Promise.all([
         supabase
           .from("logs")
           .select("id, project_id, log_date, category, content, source, source_meta, created_at")
@@ -47,11 +47,30 @@ export function useLogStore(projectId: string | null) {
           .order("log_date", { ascending: true }),
         supabase
           .from("portfolios")
-          .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
+          .select(
+            "id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at, layout"
+          )
           .eq("project_id", currentProjectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
+
+      let portfolioRows = portfolioResult.data;
+      if (portfolioResult.error) {
+        // layout 컬럼이 아직 없는 DB(마이그레이션 0004 미적용)에서도 앱이
+        // 계속 동작하도록, 실패하면 예전 컬럼 구성으로 한 번 더 시도한다.
+        console.warn(
+          "[use-log-store] layout 컬럼 조회 실패 — 0004 마이그레이션 미적용으로 추정, 예전 컬럼으로 재시도",
+          portfolioResult.error
+        );
+        const fallback = await supabase
+          .from("portfolios")
+          .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
+          .eq("project_id", currentProjectId)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        portfolioRows = (fallback.data ?? []).map((r) => ({ ...r, layout: null }));
+      }
 
       if (cancelled) return;
 

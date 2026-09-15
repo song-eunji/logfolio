@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -13,7 +16,6 @@ import {
 import { ShareToggle } from "@/components/portfolio/ShareToggle";
 import { SlideViewer } from "@/components/share/SlideViewer";
 import { DocumentViewer } from "@/components/share/DocumentViewer";
-import { splitIntoSlides } from "@/lib/slides";
 import { useLogStore } from "@/hooks/use-log-store";
 import { useAllUserOutputs } from "@/hooks/use-all-outputs";
 import { useProjectsContext } from "@/components/project/ProjectsProvider";
@@ -136,6 +138,17 @@ export default function LibraryPage() {
                   {p.generationSource === "ai" ? "AI 생성" : "로컬 초안"}
                 </p>
               </button>
+              {p.kind === "portfolio" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  nativeButton={false}
+                  render={<Link href={`/library/${p.id}/edit`} aria-label="편집" />}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+              )}
               <ShareToggle
                 portfolioId={p.id}
                 isPublic={p.isPublic}
@@ -160,7 +173,8 @@ export default function LibraryPage() {
               </DialogHeader>
               {selected.kind === "portfolio" ? (
                 <SlideViewer
-                  slides={splitIntoSlides(selected.content)}
+                  content={selected.content}
+                  layout={selected.layout}
                   heading={selected.projectName}
                 />
               ) : (

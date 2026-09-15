@@ -3,7 +3,6 @@
 import { AlertTriangle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SlideViewer } from "@/components/share/SlideViewer";
-import { splitIntoSlides } from "@/lib/slides";
 import type { GenerationSource } from "@/lib/types";
 
 export function PortfolioViewer({
@@ -29,7 +28,7 @@ export function PortfolioViewer({
         </div>
       )}
 
-      <SlideViewer slides={splitIntoSlides(markdown)} heading="미리보기" />
+      <SlideViewer content={markdown} heading="미리보기" />
 
       {onSave && (
         <Button onClick={onSave} disabled={saved} className="self-end gap-1.5">

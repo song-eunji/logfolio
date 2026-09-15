@@ -1,4 +1,5 @@
 import type { LogEntry, OutputKind, Portfolio, PortfolioMeta } from "@/lib/types";
+import type { PortfolioLayout } from "@/lib/slideLayout";
 
 // DB(snake_case) <-> 앱 타입(camelCase) 변환
 
@@ -36,6 +37,7 @@ export interface PortfolioRow {
   meta: PortfolioMeta | null;
   is_public: boolean;
   created_at: string;
+  layout?: PortfolioLayout | null;
 }
 
 export function mapPortfolioRow(row: PortfolioRow): Portfolio {
@@ -49,5 +51,6 @@ export function mapPortfolioRow(row: PortfolioRow): Portfolio {
     meta: row.meta,
     isPublic: row.is_public,
     createdAt: row.created_at,
+    layout: row.layout ?? null,
   };
 }
