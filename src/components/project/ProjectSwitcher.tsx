@@ -68,7 +68,7 @@ export function ProjectSwitcher({
   return (
     <div className="flex items-center gap-1.5">
       <Select value={activeProjectId ?? ""} onValueChange={(v) => v && onSelect(v)}>
-        <SelectTrigger className="h-8 w-44">
+        <SelectTrigger className="h-9 w-52 font-medium">
           <SelectValue placeholder="프로젝트 선택">
             {(value: string | null) =>
               projects.find((p) => p.id === value)?.name ?? "프로젝트 선택"

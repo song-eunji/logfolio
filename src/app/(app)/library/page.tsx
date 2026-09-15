@@ -25,6 +25,13 @@ const KIND_LABEL: Record<OutputKind, string> = {
   cover_letter: "자소서",
 };
 
+const TABS: { key: OutputKind | "all"; label: string }[] = [
+  { key: "all", label: "전체" },
+  { key: "portfolio", label: "포트폴리오" },
+  { key: "resume", label: "이력서" },
+  { key: "cover_letter", label: "자소서" },
+];
+
 function isCoverLetterMeta(meta: unknown): meta is CoverLetterMeta {
   return !!meta && typeof meta === "object" && "question" in meta;
 }
@@ -37,6 +44,17 @@ export default function LibraryPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const allOutputs = useAllUserOutputs(refreshKey);
   const [selected, setSelected] = useState<Portfolio | null>(null);
+  const [activeTab, setActiveTab] = useState<OutputKind | "all">("all");
+
+  const filteredOutputs =
+    activeTab === "all"
+      ? allOutputs.outputs
+      : allOutputs.outputs.filter((p) => p.kind === activeTab);
+
+  const countByKind = (kind: OutputKind | "all") =>
+    kind === "all"
+      ? allOutputs.outputs.length
+      : allOutputs.outputs.filter((p) => p.kind === kind).length;
 
   async function handleToggle(id: string, isPublic: boolean) {
     const ok = await store.togglePublic(id, isPublic);
@@ -64,15 +82,37 @@ export default function LibraryPage() {
         </p>
       </section>
 
+      <div className="flex flex-wrap gap-1.5">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label} ({countByKind(tab.key)})
+          </button>
+        ))}
+      </div>
+
       {allOutputs.outputs.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
             아직 저장된 산출물이 없어요. &quot;AI 스튜디오&quot;에서 먼저 하나 만들어보세요.
           </p>
         </div>
+      ) : filteredOutputs.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            이 종류로 저장된 산출물이 아직 없어요.
+          </p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-2">
-          {allOutputs.outputs.map((p) => (
+          {filteredOutputs.map((p) => (
             <li
               key={p.id}
               className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40"

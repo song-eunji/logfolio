@@ -9,7 +9,7 @@ import { ResumeGenerator } from "@/components/resume/ResumeGenerator";
 import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
 import { CombinedPortfolioGenerator } from "@/components/portfolio/CombinedPortfolioGenerator";
 import { JobMatchPortfolioGenerator } from "@/components/portfolio/JobMatchPortfolioGenerator";
-import { ProjectDescription } from "@/components/project/ProjectDescription";
+import { ProjectSwitcher } from "@/components/project/ProjectSwitcher";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DismissibleBanner } from "@/components/onboarding/DismissibleBanner";
 import { useLogStore } from "@/hooks/use-log-store";
@@ -23,7 +23,8 @@ export default function StudioPage() {
     loaded: projectsLoaded,
     projects,
     activeProjectId,
-    updateProjectDescription,
+    setActiveProjectId,
+    createProject,
   } = useProjectsContext();
   const store = useLogStore(activeProjectId);
   const { profile, updateProfile } = useProfile();
@@ -159,12 +160,22 @@ export default function StudioPage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
-      <section className="flex flex-col gap-1">
+      <section className="flex flex-col gap-3">
         <h1 className="text-xl font-bold text-foreground">AI 스튜디오</h1>
-        <p className="text-sm text-muted-foreground">
-          현재 프로젝트: <span className="font-medium text-foreground">{activeProject?.name}</span> ·
-          {" "}{store.logs.length}개의 기록
-        </p>
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <span className="text-sm font-semibold text-foreground">
+            작업할 프로젝트
+          </span>
+          <ProjectSwitcher
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onSelect={setActiveProjectId}
+            onCreate={createProject}
+          />
+          <span className="text-sm text-muted-foreground">
+            {store.logs.length}개의 기록
+          </span>
+        </div>
       </section>
 
       <DismissibleBanner storageKey="logfolio:studioIntroDismissed">
@@ -178,15 +189,6 @@ export default function StudioPage() {
       <section>
         <ProfileSettings profile={profile} onSave={updateProfile} />
       </section>
-
-      {activeProject && (
-        <section>
-          <ProjectDescription
-            project={activeProject}
-            onSave={updateProjectDescription}
-          />
-        </section>
-      )}
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">

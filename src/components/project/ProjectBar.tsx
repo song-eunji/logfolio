@@ -13,11 +13,11 @@ export function ProjectBar() {
   if (!loaded) return null;
 
   return (
-    <div className="border-b border-border bg-accent/40">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-2.5">
-        <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-          <FolderKanban className="size-4" />
-          프로젝트
+    <div className="border-b-2 border-primary/15 bg-primary/5">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3.5">
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <FolderKanban className="size-[18px] text-primary" />
+          현재 작업 중인 프로젝트
         </span>
         <ProjectSwitcher
           projects={projects}

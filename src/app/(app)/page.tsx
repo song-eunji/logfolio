@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { LogCalendar } from "@/components/calendar/LogCalendar";
 import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
+import { ProjectDescription } from "@/components/project/ProjectDescription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useLogStore } from "@/hooks/use-log-store";
@@ -14,7 +15,13 @@ import { useProjectsContext } from "@/components/project/ProjectsProvider";
 import type { GithubCommit } from "@/lib/types";
 
 export default function RecordPage() {
-  const { loaded: projectsLoaded, activeProjectId } = useProjectsContext();
+  const {
+    loaded: projectsLoaded,
+    projects,
+    activeProjectId,
+    updateProjectDescription,
+  } = useProjectsContext();
+  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
   const store = useLogStore(activeProjectId);
   const { profile } = useProfile();
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -64,6 +71,15 @@ export default function RecordPage() {
           포트폴리오가 만들어집니다.
         </p>
       </section>
+
+      {activeProject && (
+        <section>
+          <ProjectDescription
+            project={activeProject}
+            onSave={updateProjectDescription}
+          />
+        </section>
+      )}
 
       <OnboardingChecklist
         items={[
