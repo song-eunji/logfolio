@@ -23,7 +23,7 @@ export function JobMatchPortfolioGenerator({
   onSave,
 }: {
   projects: Project[];
-  onSave: (content: string, projectName: string, jobPostingExcerpt: string) => Promise<boolean>;
+  onSave: (content: string, projectName: string, jobPostingExcerpt: string) => Promise<string | null>;
 }) {
   const [supabaseClient] = useState(() => createClient());
   const [selectedId, setSelectedId] = useSessionState<string>(
@@ -42,7 +42,7 @@ export function JobMatchPortfolioGenerator({
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useSessionState<string | null>("jobmatch:result", null);
-  const [saved, setSaved] = useSessionState("jobmatch:saved", false);
+  const [savedId, setSavedId] = useSessionState<string | null>("jobmatch:savedId", null);
 
   if (projects.length === 0) return null;
 
@@ -52,7 +52,7 @@ export function JobMatchPortfolioGenerator({
     setGenerating(true);
     setError(null);
     setResult(null);
-    setSaved(false);
+    setSavedId(null);
     try {
       const {
         data: { user },
@@ -96,16 +96,17 @@ export function JobMatchPortfolioGenerator({
     }
   }
 
-  async function handleSave() {
-    if (!result) return;
+  async function handleSave(): Promise<string | null> {
+    if (!result) return null;
     const project = projects.find((p) => p.id === selectedId);
-    const ok = await onSave(result, project?.name ?? "포트폴리오", jobPosting.slice(0, 200));
-    if (ok) {
-      setSaved(true);
+    const id = await onSave(result, project?.name ?? "포트폴리오", jobPosting.slice(0, 200));
+    if (id) {
+      setSavedId(id);
       toast.success("공고 맞춤 포트폴리오가 저장되었습니다.");
     } else {
       toast.error("저장에 실패했습니다.");
     }
+    return id;
   }
 
   return (
@@ -160,7 +161,8 @@ export function JobMatchPortfolioGenerator({
           markdown={result}
           generationSource="ai"
           onSave={handleSave}
-          saved={saved}
+          saved={!!savedId}
+          savedId={savedId}
         />
       )}
     </div>

@@ -20,7 +20,7 @@ export function CombinedPortfolioGenerator({
     content: string,
     generationSource: GenerationSource,
     combinedProjectNames: string[]
-  ) => Promise<boolean>;
+  ) => Promise<string | null>;
 }) {
   const [supabase] = useState(() => createClient());
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -31,7 +31,7 @@ export function CombinedPortfolioGenerator({
     generationSource: GenerationSource;
     names: string[];
   } | null>("combined:result", null);
-  const [saved, setSaved] = useSessionState("combined:saved", false);
+  const [savedId, setSavedId] = useSessionState<string | null>("combined:savedId", null);
 
   function toggle(id: string) {
     setSelected((s) => {
@@ -47,7 +47,7 @@ export function CombinedPortfolioGenerator({
     setGenerating(true);
     setError(null);
     setResult(null);
-    setSaved(false);
+    setSavedId(null);
     try {
       const {
         data: { user },
@@ -99,15 +99,16 @@ export function CombinedPortfolioGenerator({
     }
   }
 
-  async function handleSave() {
-    if (!result) return;
-    const ok = await onSave(result.markdown, result.generationSource, result.names);
-    if (ok) {
-      setSaved(true);
+  async function handleSave(): Promise<string | null> {
+    if (!result) return null;
+    const id = await onSave(result.markdown, result.generationSource, result.names);
+    if (id) {
+      setSavedId(id);
       toast.success("통합 포트폴리오가 저장되었습니다.");
     } else {
       toast.error("저장에 실패했습니다.");
     }
+    return id;
   }
 
   if (projects.length < 2) {
@@ -164,7 +165,8 @@ export function CombinedPortfolioGenerator({
           markdown={result.markdown}
           generationSource={result.generationSource}
           onSave={handleSave}
-          saved={saved}
+          saved={!!savedId}
+          savedId={savedId}
         />
       )}
     </div>

@@ -40,7 +40,8 @@ export default function StudioPage() {
   } | null>("portfolio:result", null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
-  const [saved, setSaved] = useSessionState("portfolio:saved", false);
+  const [savedId, setSavedId] = useSessionState<string | null>("portfolio:savedId", null);
+  const saved = !!savedId;
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
   // 다른 프로젝트에서 만든 결과가 새 프로젝트로 잘못 저장되지 않도록 프로젝트가 같을 때만 보여준다
@@ -67,7 +68,7 @@ export default function StudioPage() {
     }
     setGenerating(true);
     setGenError(null);
-    setSaved(false);
+    setSavedId(null);
     try {
       const res = await fetch("/api/portfolio/generate", {
         method: "POST",
@@ -95,8 +96,8 @@ export default function StudioPage() {
     }
   }
 
-  async function handleSave() {
-    if (!generation || !activeProject) return;
+  async function handleSave(): Promise<string | null> {
+    if (!generation || !activeProject) return null;
     const result = await store.savePortfolio({
       content: generation.markdown,
       generationSource: generation.generationSource,
@@ -105,19 +106,20 @@ export default function StudioPage() {
     });
     if (!result) {
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
-      return;
+      return null;
     }
-    setSaved(true);
+    setSavedId(result.id);
     bump();
     toast.success("포트폴리오가 저장되었습니다.");
+    return result.id;
   }
 
   async function handleSaveCombined(
     content: string,
     generationSource: GenerationSource,
     combinedProjectNames: string[]
-  ) {
-    if (!activeProject) return false;
+  ): Promise<string | null> {
+    if (!activeProject) return null;
     const result = await store.savePortfolio({
       content,
       generationSource,
@@ -126,15 +128,15 @@ export default function StudioPage() {
       meta: { combinedProjectNames },
     });
     if (result) bump();
-    return !!result;
+    return result?.id ?? null;
   }
 
   async function handleSaveJobMatch(
     content: string,
     projectName: string,
     jobPostingExcerpt: string
-  ) {
-    if (!activeProjectId) return false;
+  ): Promise<string | null> {
+    if (!activeProjectId) return null;
     const result = await store.savePortfolio({
       content,
       generationSource: "ai",
@@ -143,7 +145,7 @@ export default function StudioPage() {
       meta: { jobPostingExcerpt },
     });
     if (result) bump();
-    return !!result;
+    return result?.id ?? null;
   }
 
   async function handleSaveResume(content: string) {
@@ -241,6 +243,7 @@ export default function StudioPage() {
             generationSource={generation.generationSource}
             onSave={handleSave}
             saved={saved}
+            savedId={savedId}
           />
         )}
       </section>
