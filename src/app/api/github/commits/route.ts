@@ -4,6 +4,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const owner = searchParams.get("owner");
   const repo = searchParams.get("repo");
+  const author = searchParams.get("author")?.trim();
 
   if (!owner || !repo) {
     return Response.json(
@@ -12,8 +13,9 @@ export async function GET(request: Request) {
     );
   }
 
+  const authorQuery = author ? `&author=${encodeURIComponent(author)}` : "";
   const res = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/commits?per_page=30`,
+    `https://api.github.com/repos/${owner}/${repo}/commits?per_page=30${authorQuery}`,
     {
       headers: {
         Accept: "application/vnd.github+json",

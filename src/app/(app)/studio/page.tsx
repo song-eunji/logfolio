@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GenerateButton } from "@/components/portfolio/GenerateButton";
 import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
@@ -32,7 +32,8 @@ export default function StudioPage() {
   const allOutputs = useAllUserOutputs(refreshKey);
   const bump = () => setRefreshKey((k) => k + 1);
 
-  const [generation, setGeneration] = useState<{
+  const [generationState, setGeneration] = useState<{
+    projectId: string;
     markdown: string;
     generationSource: GenerationSource;
   } | null>(null);
@@ -41,9 +42,28 @@ export default function StudioPage() {
   const [saved, setSaved] = useState(false);
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
+  // 다른 프로젝트에서 만든 결과가 새 프로젝트로 잘못 저장되지 않도록 프로젝트가 같을 때만 보여준다
+  const generation =
+    generationState && generationState.projectId === activeProjectId ? generationState : null;
+  const hasUnsaved = !!generation && !saved;
+
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    function warn(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsaved]);
 
   async function handleGenerate() {
     if (!activeProject) return;
+    if (
+      hasUnsaved &&
+      !window.confirm("저장하지 않은 포트폴리오가 있어요. 새로 생성하면 지금 결과는 사라집니다. 계속할까요?")
+    ) {
+      return;
+    }
     setGenerating(true);
     setGenError(null);
     setSaved(false);
@@ -62,7 +82,11 @@ export default function StudioPage() {
         setGenError(data.message ?? "생성에 실패했습니다.");
         return;
       }
-      setGeneration({ markdown: data.markdown, generationSource: data.generationSource });
+      setGeneration({
+        projectId: activeProject.id,
+        markdown: data.markdown,
+        generationSource: data.generationSource,
+      });
     } catch {
       setGenError("네트워크 오류가 발생했습니다.");
     } finally {

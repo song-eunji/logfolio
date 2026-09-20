@@ -21,9 +21,14 @@ export function DayLogForm({
   onAdd: (input: { logDate: string; category: string; content: string }) => void;
   onRemove: (id: string) => void;
 }) {
-  const [category, setCategory] = useState<string>(DEFAULT_CATEGORIES[0]);
+  const [selected, setSelected] = useState<string[]>([DEFAULT_CATEGORIES[0]]);
+  const [customOn, setCustomOn] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
   const [content, setContent] = useState("");
+
+  function toggleCategory(c: string) {
+    setSelected((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]));
+  }
 
   const dayLogs = useMemo(
     () => logs.filter((l) => l.logDate === selectedDate),
@@ -40,9 +45,10 @@ export function DayLogForm({
   function handleSubmit() {
     const trimmed = content.trim();
     if (!trimmed) return;
-    const finalCategory = category === "__custom__" ? customCategory.trim() : category;
-    if (!finalCategory) return;
-    onAdd({ logDate: selectedDate, category: finalCategory, content: trimmed });
+    const custom = customOn ? customCategory.trim() : "";
+    const all = custom ? [...selected, custom] : selected;
+    if (all.length === 0) return;
+    onAdd({ logDate: selectedDate, category: all.join(", "), content: trimmed });
     setContent("");
   }
 
@@ -55,35 +61,38 @@ export function DayLogForm({
         <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {DEFAULT_CATEGORIES.map((c) => (
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[11px] text-muted-foreground">분류 (여러 개 선택 가능)</p>
+        <div className="flex flex-wrap gap-1.5">
+          {DEFAULT_CATEGORIES.map((c) => (
+            <button
+              key={c}
+              onClick={() => toggleCategory(c)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                selected.includes(c)
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-foreground hover:bg-muted"
+              )}
+            >
+              {c}
+            </button>
+          ))}
           <button
-            key={c}
-            onClick={() => setCategory(c)}
+            onClick={() => setCustomOn((v) => !v)}
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              category === c
+              customOn
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-background text-foreground hover:bg-muted"
             )}
           >
-            {c}
+            + 직접 입력
           </button>
-        ))}
-        <button
-          onClick={() => setCategory("__custom__")}
-          className={cn(
-            "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-            category === "__custom__"
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-background text-foreground hover:bg-muted"
-          )}
-        >
-          + 직접 입력
-        </button>
+        </div>
       </div>
 
-      {category === "__custom__" && (
+      {customOn && (
         <input
           value={customCategory}
           onChange={(e) => setCustomCategory(e.target.value)}
@@ -114,9 +123,11 @@ export function DayLogForm({
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <Badge variant="secondary" className="text-[11px]">
-                    {log.category}
-                  </Badge>
+                  {log.category.split(",").map((c) => (
+                    <Badge key={c} variant="secondary" className="text-[11px]">
+                      {c.trim()}
+                    </Badge>
+                  ))}
                   {log.source === "github" && (
                     <Badge variant="outline" className="gap-1 text-[11px]">
                       <GitCommit className="size-3" />

@@ -18,9 +18,10 @@ export function buildLocalDraft(input: {
 
   const byCategory = new Map<string, LogEntry[]>();
   for (const log of sorted) {
-    const list = byCategory.get(log.category) ?? [];
+    const primary = log.category.split(",")[0].trim();
+    const list = byCategory.get(primary) ?? [];
     list.push(log);
-    byCategory.set(log.category, list);
+    byCategory.set(primary, list);
   }
 
   const activities = Array.from(byCategory.entries())

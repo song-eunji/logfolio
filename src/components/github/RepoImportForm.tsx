@@ -15,6 +15,24 @@ type FetchState =
   | { status: "error"; message: string }
   | { status: "success"; commits: GithubCommit[] };
 
+const AUTHOR_STORAGE_KEY = "logfolio:githubAuthor";
+
+function readStoredAuthor() {
+  try {
+    return window.localStorage.getItem(AUTHOR_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredAuthor(value: string) {
+  try {
+    window.localStorage.setItem(AUTHOR_STORAGE_KEY, value);
+  } catch {
+    // 저장 실패해도 동작에는 지장 없음
+  }
+}
+
 export function RepoImportForm({
   importedShas,
   onImport,
@@ -23,6 +41,7 @@ export function RepoImportForm({
   onImport: (repo: string, commit: GithubCommit, category: string) => void;
 }) {
   const [repoInput, setRepoInput] = useState("");
+  const [authorInput, setAuthorInput] = useState(readStoredAuthor);
   const [category, setCategory] = useState<string>(DEFAULT_CATEGORIES[0]);
   const [state, setState] = useState<FetchState>({ status: "idle" });
 
@@ -37,10 +56,14 @@ export function RepoImportForm({
       return;
     }
 
+    const author = authorInput.trim();
+    writeStoredAuthor(author);
+
     setState({ status: "loading" });
     try {
+      const authorParam = author ? `&author=${encodeURIComponent(author)}` : "";
       const res = await fetch(
-        `/api/github/commits?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`
+        `/api/github/commits?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}${authorParam}`
       );
       const data = await res.json();
       if (!res.ok) {
@@ -67,12 +90,19 @@ export function RepoImportForm({
         공개 저장소의 owner/repo를 입력하면 최근 커밋을 불러옵니다. 원하는 커밋만 골라 기록에 추가하세요.
       </p>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           value={repoInput}
           onChange={(e) => setRepoInput(e.target.value)}
           placeholder="owner/repo (예: vercel/next.js)"
           onKeyDown={(e) => e.key === "Enter" && handleFetch()}
+        />
+        <Input
+          value={authorInput}
+          onChange={(e) => setAuthorInput(e.target.value)}
+          placeholder="내 GitHub 아이디 (입력하면 내 커밋만)"
+          onKeyDown={(e) => e.key === "Enter" && handleFetch()}
+          className="sm:max-w-64"
         />
         <Button
           onClick={handleFetch}
