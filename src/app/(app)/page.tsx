@@ -8,6 +8,7 @@ import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
 import { ProjectDescription } from "@/components/project/ProjectDescription";
 import { ProjectBar } from "@/components/project/ProjectBar";
+import { HabitCard } from "@/components/calendar/HabitCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useLogStore } from "@/hooks/use-log-store";
@@ -105,6 +106,8 @@ ${text}` : text;
           },
         ]}
       />
+
+      <HabitCard logs={store.logs} />
 
       <section className="grid gap-4 md:grid-cols-2">
         <LogCalendar

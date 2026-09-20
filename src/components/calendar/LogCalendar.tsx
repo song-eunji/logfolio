@@ -16,21 +16,8 @@ import {
 import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { computeStreak } from "@/lib/habit";
 import type { LogEntry } from "@/lib/types";
-
-function computeStreak(logDates: Set<string>): number {
-  let streak = 0;
-  const cursor = new Date();
-  // 오늘 기록이 아직 없어도 어제까지 이어졌으면 스트릭으로 인정
-  if (!logDates.has(format(cursor, "yyyy-MM-dd"))) {
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  while (logDates.has(format(cursor, "yyyy-MM-dd"))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
 
 export function LogCalendar({
   logs,
