@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ChevronLeft, ChevronRight, Printer, Sparkles } from "lucide-react";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { classifySlideKind, splitIntoSlides } from "@/lib/slides";
 import { KIND_STYLE } from "@/lib/slideKindStyle";
-import { resolveEditableSlides, DEFAULT_THEME, type PortfolioLayout } from "@/lib/slideLayout";
+import { resolveEditableSlides, DEFAULT_THEME, CANVAS_WIDTH, type PortfolioLayout } from "@/lib/slideLayout";
 import { SlideCanvas } from "@/components/portfolio/editor/SlideCanvas";
 
 export function SlideViewer({
@@ -21,6 +21,8 @@ export function SlideViewer({
   heading: string;
 }) {
   const [index, setIndex] = useState(0);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const markdownSlides = useMemo(() => splitIntoSlides(content), [content]);
   const slides = useMemo(
     () => resolveEditableSlides(markdownSlides, layout),
@@ -31,6 +33,15 @@ export function SlideViewer({
   const kind = canvasMode ? slide.kind : classifySlideKind({ title: slide.title, body: slide.body, level: 2 });
   const style = KIND_STYLE[kind];
   const Icon = style.icon;
+
+  // 편집한 슬라이드(고정 폭 캔버스)를 화면 폭에 맞춰 줄여서 보여준다 (모바일 대응)
+  useEffect(() => {
+    const el = canvasWrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setScale(Math.min(1, el.clientWidth / CANVAS_WIDTH)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [canvasMode]);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -57,7 +68,8 @@ export function SlideViewer({
       </div>
 
       {canvasMode ? (
-        <div className="overflow-x-auto rounded-lg">
+        <div ref={canvasWrapRef} className="w-full overflow-hidden rounded-lg">
+          <div style={{ zoom: scale }}>
           <SlideCanvas
             slide={slide}
             layout={layout!}
@@ -69,6 +81,7 @@ export function SlideViewer({
             onBlockCommit={() => {}}
             onTextCommit={() => {}}
           />
+          </div>
         </div>
       ) : (
         <div className="min-h-[420px] overflow-hidden rounded-lg border border-border bg-card">

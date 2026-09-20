@@ -26,7 +26,7 @@ export function useAllUserOutputs(refreshKey: number) {
       } = await supabase.auth.getUser();
       if (!user || cancelled) return;
 
-      const [{ data: logRows }, { data: outputRows }] = await Promise.all([
+      const [{ data: logRows }, outputResult] = await Promise.all([
         supabase
           .from("logs")
           .select("id, project_id, log_date, category, content, source, source_meta, created_at")
@@ -34,10 +34,23 @@ export function useAllUserOutputs(refreshKey: number) {
           .order("log_date", { ascending: true }),
         supabase
           .from("portfolios")
-          .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
+          .select(
+            "id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at, layout"
+          )
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
+
+      let outputRows = outputResult.data;
+      if (outputResult.error) {
+        // layout 컬럼이 없는 DB(마이그레이션 0004 미적용)에서도 목록은 보이도록 재시도
+        const fallback = await supabase
+          .from("portfolios")
+          .select("id, project_id, project_name, content, generation_source, kind, meta, is_public, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        outputRows = (fallback.data ?? []).map((r) => ({ ...r, layout: null }));
+      }
 
       if (cancelled) return;
       setLogs(((logRows ?? []) as LogRow[]).map(mapLogRow));

@@ -107,6 +107,7 @@ export default function RecordPage() {
           logs={store.logs}
           onAdd={store.addLog}
           onRemove={store.removeLog}
+          onUpdate={store.updateLog}
         />
       </section>
 

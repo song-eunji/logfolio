@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, GitCommit } from "lucide-react";
+import { Plus, Trash2, GitCommit, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -15,16 +15,27 @@ export function DayLogForm({
   logs,
   onAdd,
   onRemove,
+  onUpdate,
 }: {
   selectedDate: string;
   logs: LogEntry[];
   onAdd: (input: { logDate: string; category: string; content: string }) => void;
   onRemove: (id: string) => void;
+  onUpdate: (id: string, content: string) => Promise<boolean>;
 }) {
   const [selected, setSelected] = useState<string[]>([DEFAULT_CATEGORIES[0]]);
   const [customOn, setCustomOn] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
   const [content, setContent] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+
+  async function saveEdit() {
+    if (!editingId) return;
+    const ok = await onUpdate(editingId, editText);
+    if (ok) setEditingId(null);
+  }
 
   function toggleCategory(c: string) {
     setSelected((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]));
@@ -135,17 +146,60 @@ export function DayLogForm({
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                  {log.content}
-                </p>
+                {editingId === log.id ? (
+                  <Textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={3}
+                    autoFocus
+                    className="resize-none text-sm"
+                  />
+                ) : (
+                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                    {log.content}
+                  </p>
+                )}
               </div>
-              <button
-                onClick={() => onRemove(log.id)}
-                className="text-muted-foreground hover:text-destructive shrink-0"
-                aria-label="삭제"
-              >
-                <Trash2 className="size-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {editingId === log.id ? (
+                  <>
+                    <button
+                      onClick={saveEdit}
+                      className="text-primary hover:opacity-80"
+                      aria-label="수정 저장"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="수정 취소"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setEditingId(log.id);
+                        setEditText(log.content);
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="수정"
+                    >
+                      <Pencil className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => onRemove(log.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </li>
           ))}
         </ul>

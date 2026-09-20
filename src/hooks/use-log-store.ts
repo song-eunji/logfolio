@@ -124,6 +124,39 @@ export function useLogStore(projectId: string | null) {
     [supabase]
   );
 
+  const updateLog = useCallback(
+    async (id: string, content: string) => {
+      const trimmed = content.trim();
+      if (!trimmed) return false;
+      const previous = state.logs;
+      setState((s) => ({
+        ...s,
+        logs: s.logs.map((l) => (l.id === id ? { ...l, content: trimmed } : l)),
+      }));
+      const { error } = await supabase.from("logs").update({ content: trimmed }).eq("id", id);
+      if (error) {
+        console.error("[use-log-store] updateLog failed", error);
+        setState((s) => ({ ...s, logs: previous }));
+        return false;
+      }
+      return true;
+    },
+    [state.logs, supabase]
+  );
+
+  const removePortfolio = useCallback(
+    async (id: string) => {
+      const { error } = await supabase.from("portfolios").delete().eq("id", id);
+      if (error) {
+        console.error("[use-log-store] removePortfolio failed", error);
+        return false;
+      }
+      setState((s) => ({ ...s, portfolios: s.portfolios.filter((p) => p.id !== id) }));
+      return true;
+    },
+    [supabase]
+  );
+
   const importCommitAsLog = useCallback(
     async (input: { repo: string; commit: GithubCommit; category: string }) => {
       const { repo, commit, category } = input;
@@ -230,6 +263,8 @@ export function useLogStore(projectId: string | null) {
     logs: state.logs,
     addLog,
     removeLog,
+    updateLog,
+    removePortfolio,
     importCommitAsLog,
     portfolios: state.portfolios,
     savePortfolio,

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,6 +63,18 @@ export default function LibraryPage() {
     const ok = await store.togglePublic(id, isPublic);
     if (ok) setRefreshKey((k) => k + 1);
     return ok;
+  }
+
+  async function handleDelete(p: Portfolio) {
+    const label = p.kind === "cover_letter" && isCoverLetterMeta(p.meta) ? "이 자소서" : `"${p.projectName}"`;
+    if (!window.confirm(`${label}를 보관함에서 삭제할까요? 삭제하면 되돌릴 수 없고, 공유 링크도 더 이상 열리지 않아요.`)) return;
+    const ok = await store.removePortfolio(p.id);
+    if (ok) {
+      setRefreshKey((k) => k + 1);
+      toast.success("삭제했어요.");
+    } else {
+      toast.error("삭제에 실패했습니다.");
+    }
   }
 
   if (!allOutputs.loaded) {
@@ -154,6 +167,13 @@ export default function LibraryPage() {
                 isPublic={p.isPublic}
                 onToggle={handleToggle}
               />
+              <button
+                onClick={() => handleDelete(p)}
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+                aria-label="삭제"
+              >
+                <Trash2 className="size-4" />
+              </button>
             </li>
           ))}
         </ul>

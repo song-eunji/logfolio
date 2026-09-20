@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { KIND_STYLE } from "@/lib/slideKindStyle";
 import {
@@ -126,6 +128,7 @@ function BlockView({
 
   return (
     <div
+      data-block={blockKey}
       style={style}
       className={cn(
         "rounded-md p-1.5 transition-shadow",
@@ -174,14 +177,23 @@ function BlockView({
           />
         )
       ) : blockKey === "title" ? (
-        <h2 className="font-bold" style={{ fontSize: "inherit" }}>
-          {text || "제목 없음"}
-        </h2>
-      ) : (
-        <p className="whitespace-pre-wrap" style={{ fontSize: "inherit" }}>
-          {text || "내용을 입력하세요"}
-        </p>
-      )}
+        text || editable ? (
+          <h2 className="font-bold" style={{ fontSize: "inherit" }}>
+            {text || "제목 없음"}
+          </h2>
+        ) : null
+      ) : text || editable ? (
+        <div
+          className="[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:font-bold"
+          style={{ fontSize: "inherit" }}
+        >
+          {text ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+          ) : (
+            <p className="opacity-50">내용을 입력하세요</p>
+          )}
+        </div>
+      ) : null}
 
       {editable && selected && !editing && (
         <span
@@ -216,6 +228,23 @@ export function SlideCanvas({
 }) {
   const kindStyle = KIND_STYLE[slide.kind];
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [canvasHeight, setCanvasHeight] = useState(CANVAS_HEIGHT);
+
+  // 본문이 길어도 잘리지 않도록, 블록의 실제 하단에 맞춰 캔버스 높이를 늘린다.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const blocks = Array.from(el.querySelectorAll<HTMLElement>("[data-block]"));
+      const bottom = blocks.reduce((m, b) => Math.max(m, b.offsetTop + b.offsetHeight), 0);
+      const next = Math.max(CANVAS_HEIGHT, Math.ceil(bottom + 28));
+      setCanvasHeight((h) => (h === next ? h : next));
+    };
+    const ro = new ResizeObserver(measure);
+    Array.from(el.querySelectorAll("[data-block]")).forEach((b) => ro.observe(b));
+    measure();
+    return () => ro.disconnect();
+  }, [slide.id, layout]);
 
   return (
     <div
@@ -223,7 +252,7 @@ export function SlideCanvas({
       className="relative mx-auto overflow-hidden rounded-lg border border-border shadow-sm"
       style={{
         width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
+        height: canvasHeight,
         background: theme.background,
         fontFamily: themeFontFamily(theme.font),
       }}
