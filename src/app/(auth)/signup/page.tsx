@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUpWithPassword } from "@/lib/actions/auth";
 import { ServiceIntro } from "@/components/onboarding/ServiceIntro";
+import { DemoButton } from "@/components/auth/DemoButton";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -67,9 +68,17 @@ export default function SignupPage() {
         </div>
 
         <div className="order-1 flex w-full flex-col gap-6 md:order-2">
-          <div className="flex items-center gap-1.5 md:justify-center">
-            <Sparkles className="size-5 text-primary" />
-            <span className="text-lg font-bold text-foreground">Logfolio</span>
+          <div className="flex items-center gap-2 md:justify-center">
+            <Sparkles className="size-8 text-primary" />
+            <span className="text-3xl font-extrabold text-foreground">Logfolio</span>
+          </div>
+
+          <DemoButton />
+
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            또는 회원가입
+            <span className="h-px flex-1 bg-border" />
           </div>
 
           <form

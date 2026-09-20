@@ -7,6 +7,7 @@ import { LogCalendar } from "@/components/calendar/LogCalendar";
 import { DayLogForm } from "@/components/calendar/DayLogForm";
 import { RepoImportForm } from "@/components/github/RepoImportForm";
 import { ProjectDescription } from "@/components/project/ProjectDescription";
+import { ProjectBar } from "@/components/project/ProjectBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useLogStore } from "@/hooks/use-log-store";
@@ -71,6 +72,8 @@ export default function RecordPage() {
           포트폴리오가 만들어집니다.
         </p>
       </section>
+
+      <ProjectBar />
 
       {activeProject && (
         <section>

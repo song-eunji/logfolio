@@ -13,29 +13,27 @@ export function ProjectBar() {
   if (!loaded) return null;
 
   return (
-    <div className="border-b-2 border-primary/15 bg-primary/5">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3.5">
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <FolderKanban className="size-[18px] text-primary" />
-          현재 작업 중인 프로젝트
-        </span>
-        <ProjectSwitcher
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onSelect={setActiveProjectId}
-          onCreate={createProject}
-        />
-        {activeProject && (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground">
-            이름:
-            <input
-              value={activeProject.name}
-              onChange={(e) => renameProject(activeProject.id, e.target.value)}
-              className="rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-foreground hover:border-input focus:border-input focus:outline-none"
-            />
-          </label>
-        )}
-      </div>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3.5">
+      <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+        <FolderKanban className="size-[18px] text-primary" />
+        현재 작업 중인 프로젝트
+      </span>
+      <ProjectSwitcher
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onSelect={setActiveProjectId}
+        onCreate={createProject}
+      />
+      {activeProject && (
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
+          이름:
+          <input
+            value={activeProject.name}
+            onChange={(e) => renameProject(activeProject.id, e.target.value)}
+            className="rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-foreground hover:border-input focus:border-input focus:outline-none"
+          />
+        </label>
+      )}
     </div>
   );
 }
