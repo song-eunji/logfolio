@@ -17,6 +17,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useProjectsContext } from "@/components/project/ProjectsProvider";
 import { useAllUserOutputs } from "@/hooks/use-all-outputs";
 import { useSessionState } from "@/hooks/use-session-state";
+import { buildEvidenceNote } from "@/lib/evidence";
 import type { GenerationSource } from "@/lib/types";
 
 export default function StudioPage() {
@@ -37,6 +38,7 @@ export default function StudioPage() {
     projectId: string;
     markdown: string;
     generationSource: GenerationSource;
+    evidence?: string;
   } | null>("portfolio:result", null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function StudioPage() {
         projectId: activeProject.id,
         markdown: data.markdown,
         generationSource: data.generationSource,
+        evidence: buildEvidenceNote(store.logs),
       });
     } catch {
       setGenError("네트워크 오류가 발생했습니다.");
@@ -244,6 +247,7 @@ export default function StudioPage() {
             onSave={handleSave}
             saved={saved}
             savedId={savedId}
+            evidenceNote={generation.evidence}
           />
         )}
       </section>

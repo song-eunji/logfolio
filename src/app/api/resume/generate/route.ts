@@ -22,7 +22,10 @@ export async function POST(request: Request) {
   const prompt = buildResumeBulletsPrompt({ portfolioContent, job, year });
 
   try {
-    const markdown = await generateWithGemini(prompt, { allowResultRefs: false });
+    const markdown = await generateWithGemini(prompt, {
+      allowResultRefs: false,
+      sourceText: portfolioContent,
+    });
     return Response.json({ markdown });
   } catch (err) {
     console.error("[api/resume/generate] failed", err);

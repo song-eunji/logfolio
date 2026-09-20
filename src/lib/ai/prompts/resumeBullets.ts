@@ -1,3 +1,5 @@
+import { EVIDENCE_RULES } from "@/lib/ai/guardrails";
+
 export function buildResumeBulletsPrompt(input: {
   portfolioContent: string;
   job?: string | null;
@@ -15,8 +17,8 @@ export function buildResumeBulletsPrompt(input: {
 ${targetingRule}
 
 규칙:
-- 포트폴리오에 없는 사실·수치는 절대 만들어내지 마세요.
-- 각 불릿은 "행동 동사로 시작 + 무엇을 했는지 + 결과(가능하면 정량적으로)" 형태의 한 문장, 40~60자 내외로 간결하게 작성하세요.
+${EVIDENCE_RULES}
+- 각 불릿은 "행동 동사로 시작 + 무엇을 했는지 + 결과(수치는 포트폴리오에 있을 때만)" 형태의 한 문장, 40~60자 내외로 간결하게 작성하세요.
 - 전체 5~8개 불릿만 출력하세요.
 - 마크다운 불릿 목록(-)으로만 출력하고, 제목이나 설명 문구는 붙이지 마세요.
 

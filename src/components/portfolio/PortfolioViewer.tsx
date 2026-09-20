@@ -14,6 +14,7 @@ export function PortfolioViewer({
   onSave,
   saved,
   savedId,
+  evidenceNote,
 }: {
   markdown: string;
   generationSource: GenerationSource;
@@ -21,6 +22,7 @@ export function PortfolioViewer({
   onSave?: () => Promise<string | null>;
   saved?: boolean;
   savedId?: string | null;
+  evidenceNote?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -46,6 +48,12 @@ export function PortfolioViewer({
       )}
 
       <SlideViewer content={markdown} heading="미리보기" />
+
+      {evidenceNote && (
+        <p className="text-xs text-muted-foreground">
+          {evidenceNote} · 기록에 없는 내용은 쓰지 않도록 만들었어요. 그래도 저장 전에 한 번 확인해주세요.
+        </p>
+      )}
 
       {onSave && (
         <div className="flex flex-wrap items-center justify-end gap-2">

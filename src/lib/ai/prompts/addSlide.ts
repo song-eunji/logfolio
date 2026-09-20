@@ -1,3 +1,5 @@
+import { EVIDENCE_RULES } from "@/lib/ai/guardrails";
+
 export function buildAddSlidePrompt(input: {
   title: string;
   brief: string;
@@ -17,7 +19,7 @@ ${input.brief}
 위 메모를 바탕으로, 기존 포트폴리오와 어울리는 톤으로 이 슬라이드의 본문을 작성해주세요.
 
 규칙:
-- 메모와 기존 포트폴리오에 없는 사실·수치는 절대 만들어내지 마세요.
+${EVIDENCE_RULES}
 - 마크다운 헤딩(#, ##, ###)이나 <br> 같은 HTML 태그는 쓰지 말고, 순수 본문 문단/불릿만 작성하세요.
 - 한국어로, 3~6문장 정도의 간결한 분량으로 작성하세요.
 

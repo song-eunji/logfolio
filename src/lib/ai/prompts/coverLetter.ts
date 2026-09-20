@@ -1,5 +1,5 @@
-// TODO(신뢰성): portfolioStarXyz.ts에 적어둔 "맥락 부풀리기" 문제 참고 —
-// 이 프롬프트도 원본 로그를 직접 다루므로 같이 점검할 것.
+import { EVIDENCE_RULES } from "@/lib/ai/guardrails";
+
 export function buildCoverLetterPrompt(input: {
   question: string;
   charLimit: number;
@@ -31,7 +31,7 @@ ${input.logsFormatted}
 ${input.portfolioSummaries || "없음"}
 
 규칙:
-- 기록·포트폴리오에 없는 경험이나 사실을 절대 지어내지 마세요.
+${EVIDENCE_RULES}
 - 문항과 관련된 경험이 기록에 전혀 없다면, 없는 경험을 지어내는 대신 "관련 경험을 찾기 어렵습니다"라고 정직하게 답변하세요.
 - 관련 경험이 있다면 결론(무엇을 했는지/느낀 점)을 먼저 말하는 두괄식으로 작성하세요.
 - 글자 수 제한을 반드시 지키세요.

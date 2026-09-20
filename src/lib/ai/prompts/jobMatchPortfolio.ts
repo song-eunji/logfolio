@@ -1,3 +1,5 @@
+import { EVIDENCE_RULES } from "@/lib/ai/guardrails";
+
 export function buildJobMatchPrompt(input: {
   projectName: string;
   projectDescription?: string | null;
@@ -19,7 +21,7 @@ ${input.logsFormatted}
 이 채용공고의 요구 역량·우대사항에 맞춰, 기록에 있는 내용 중 이 공고와 가장 관련성 높은 경험을 우선적으로 배치하고 강조한 포트폴리오를 STAR(상황-과제-행동-결과) 형식으로 작성해주세요.
 
 규칙:
-- 기록(그리고 주어졌다면 프로젝트 소개)에 없는 사실·수치는 절대 만들어내지 마세요.
+${EVIDENCE_RULES}
 - 채용공고에서 요구하는 키워드·기술과 실제 기록을 연결지어 서술하세요.
 - 공고와 관련성이 낮은 활동은 간결하게 줄이거나 생략하세요.
 - 아래 마크다운 형식과 순서를 그대로 지키세요.

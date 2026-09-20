@@ -38,7 +38,11 @@ export async function POST(request: Request) {
   const prompt = buildPortfolioPrompt({ projectName, projectDescription, logsFormatted });
 
   try {
-    const markdown = await generateWithGemini(prompt, { allowResultRefs: false });
+    const markdown = await generateWithGemini(prompt, {
+      allowResultRefs: false,
+      sourceText: `${logsFormatted}
+${projectDescription ?? ""}`,
+    });
     return Response.json({ markdown, generationSource: "ai" as const });
   } catch (err) {
     console.error("[api/portfolio/generate] Gemini call failed, falling back to local draft", err);

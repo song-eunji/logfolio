@@ -43,7 +43,12 @@ export async function POST(request: Request) {
   });
 
   try {
-    const markdown = await generateWithGemini(prompt, { allowResultRefs: false });
+    const markdown = await generateWithGemini(prompt, {
+      allowResultRefs: false,
+      sourceText: `${logsFormatted}
+${projectDescription ?? ""}
+${jobPosting}`,
+    });
     return Response.json({ markdown });
   } catch (err) {
     console.error("[api/portfolio/match-job] failed", err);

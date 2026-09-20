@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { mapLogRow, type LogRow } from "@/lib/supabase/mappers";
 import type { Project } from "@/lib/types";
 import { useSessionState } from "@/hooks/use-session-state";
+import { buildEvidenceNote } from "@/lib/evidence";
 
 export function JobMatchPortfolioGenerator({
   projects,
@@ -43,6 +44,7 @@ export function JobMatchPortfolioGenerator({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useSessionState<string | null>("jobmatch:result", null);
   const [savedId, setSavedId] = useSessionState<string | null>("jobmatch:savedId", null);
+  const [evidence, setEvidence] = useSessionState("jobmatch:evidence", "");
 
   if (projects.length === 0) return null;
 
@@ -89,6 +91,7 @@ export function JobMatchPortfolioGenerator({
         return;
       }
       setResult(data.markdown);
+      setEvidence(buildEvidenceNote(logs));
     } catch {
       setError("생성 중 오류가 발생했습니다.");
     } finally {
@@ -163,6 +166,7 @@ export function JobMatchPortfolioGenerator({
           onSave={handleSave}
           saved={!!savedId}
           savedId={savedId}
+          evidenceNote={evidence}
         />
       )}
     </div>

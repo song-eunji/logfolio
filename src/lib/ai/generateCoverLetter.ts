@@ -14,7 +14,10 @@ export async function generateCoverLetterAnswer(input: {
   year?: string | null;
 }): Promise<{ answer: string; charCount: number; attempts: number }> {
   const prompt = buildCoverLetterPrompt(input);
-  let answer = await generateWithGemini(prompt, { allowResultRefs: false });
+  const sourceText = `${input.logsFormatted}
+${input.portfolioSummaries}
+${input.question}`;
+  let answer = await generateWithGemini(prompt, { allowResultRefs: false, sourceText });
   let attempts = 1;
 
   while (answer.length > input.charLimit && attempts < 4) {
@@ -24,7 +27,7 @@ export async function generateCoverLetterAnswer(input: {
       charLimit: input.charLimit,
       excessChars,
     });
-    answer = await generateWithGemini(retryPrompt, { allowResultRefs: false });
+    answer = await generateWithGemini(retryPrompt, { allowResultRefs: false, sourceText });
     attempts += 1;
   }
 

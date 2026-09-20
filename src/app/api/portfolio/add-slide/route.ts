@@ -20,7 +20,11 @@ export async function POST(request: Request) {
   const prompt = buildAddSlidePrompt({ title, brief, existingMarkdown });
 
   try {
-    const body = await generateWithGemini(prompt, { allowResultRefs: false });
+    const body = await generateWithGemini(prompt, {
+      allowResultRefs: false,
+      sourceText: `${existingMarkdown}
+${brief}`,
+    });
     return Response.json({ body });
   } catch (err) {
     console.error("[api/portfolio/add-slide] failed", err);
