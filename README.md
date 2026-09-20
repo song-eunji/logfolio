@@ -1,10 +1,30 @@
 # 로그폴리오 (Logfolio)
 
+![로그폴리오 대표 이미지](docs/screenshots/hero.png)
+
 **매일 3줄만 남기면, AI가 포트폴리오로 만들어드려요.**
 
 바쁘게 활동하느라 놓치기 쉬운 경험을 매일 짧게 기록하고, 그 기록을 AI가 STAR 형식의 포트폴리오·이력서·자소서로 재구성해주는 서비스입니다. 원티드 AI 챔피언십 2026 출품작.
 
 - 배포: https://logfolio-liart.vercel.app
+- 로그인 없이 체험: 로그인 화면의 **"로그인 없이 체험하기"** 버튼 (샘플 기록이 미리 채워진 체험 계정으로 바로 입장)
+
+## 서비스 화면
+
+### 1. 기록
+![기록](docs/screenshots/1-record.png)
+
+### 2. AI 포트폴리오
+![AI 포트폴리오](docs/screenshots/2-portfolio.png)
+
+### 3. 채용공고 맞춤
+![채용공고 맞춤](docs/screenshots/3-job-match.png)
+
+### 4. 이력서 · 자소서
+![이력서와 자소서](docs/screenshots/4-resume-cover.png)
+
+### 5. 편집 · 공유
+![편집과 공유](docs/screenshots/5-editor-share.png)
 
 ## 주요 기능
 
