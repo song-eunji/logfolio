@@ -46,6 +46,16 @@ export default function RecordPage() {
     }
   }
 
+  async function handleApplyRepoInfo(text: string) {
+    if (!activeProject) return;
+    const current = activeProject.description?.trim();
+    const next = current ? `${current}
+${text}` : text;
+    const ok = await updateProjectDescription(activeProject.id, next);
+    if (ok) toast.success("프로젝트 소개에 사용 기술을 추가했어요.");
+    else toast.error("소개 저장에 실패했습니다.");
+  }
+
   if (!projectsLoaded || !store.hydrated) {
     return (
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
@@ -115,6 +125,7 @@ export default function RecordPage() {
         <RepoImportForm
           importedShas={store.importedShas}
           onImport={handleImportCommit}
+          onApplyRepoInfo={handleApplyRepoInfo}
         />
       </section>
     </main>
