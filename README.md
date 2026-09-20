@@ -1,21 +1,33 @@
 # 로그폴리오 (Logfolio)
 
-매일 3줄로 남긴 활동 기록을 AI가 STAR/XYZ 형식의 포트폴리오로 변환해주는 서비스.
-원티드 AI 챔피언십 2026 출품작 — 이전 빅데이터캠프 해커톤 프로젝트를 Next.js + Supabase + Gemini로 재구축 중.
+**매일 3줄만 남기면, AI가 포트폴리오로 만들어드려요.**
 
-자세한 설계는 [plan 파일](C:\Users\user\.claude\plans\warm-bouncing-micali.md) 참고.
+바쁘게 활동하느라 놓치기 쉬운 경험을 매일 짧게 기록하고, 그 기록을 AI가 STAR 형식의 포트폴리오·이력서·자소서로 재구성해주는 서비스입니다. 원티드 AI 챔피언십 2026 출품작.
 
-## 현재 상태
+- 배포: https://logfolio-liart.vercel.app
 
-핵심 파이프라인(회원가입/로그인 → 3줄 기록 → GitHub 커밋 자동 수집 → AI STAR/XYZ 생성 → 저장/조회)이 **실제 Supabase DB 기준으로 end-to-end 동작 확인 완료**.
+## 주요 기능
 
-- [x] Next.js(App Router) + TypeScript + Tailwind v4 + shadcn/ui 스캐폴딩
-- [x] 원티드(wanted.co.kr) 톤앤매너 디자인 시스템 적용 (Pretendard, 블루 `#0066FF`, 8px 라운드 카드, pill 배지)
-- [x] Supabase 이메일/비밀번호 인증 + 세션 게이트 + 로그아웃
-- [x] 3줄 기록 + 캘린더 + 연속기록 스트릭 (Supabase `logs` 테이블, RLS로 사용자별 격리)
-- [x] GitHub 커밋 자동 수집 (사용자 승인 기반, `/api/github/commits`)
-- [x] AI STAR/XYZ 포트폴리오 생성 (`/api/portfolio/generate`, Gemini) — 실패 시 로컬 초안 폴백 + 배너 표시
-- [ ] 공개 슬라이드 공유, 이력서 압축, 자소서 매칭, 통합 포트폴리오 등은 이후 단계
+| 영역 | 기능 |
+|---|---|
+| 기록 | 캘린더 기반 3줄 기록, 연속 기록 스트릭, 로그당 여러 분류 선택, 프로젝트별 소개 입력 |
+| GitHub | 저장소 커밋 불러오기 → 원하는 커밋만 골라 기록에 추가 (내 커밋만 필터, 중복 방지) |
+| 포트폴리오 | 기록 → STAR/XYZ 포트폴리오 자동 생성, 여러 프로젝트 통합, 채용공고 맞춤 재구성 |
+| 이력서·자소서 | 희망 직무 기반 이력서 변환, 글자 수 제한에 맞춘 자소서 답변 생성(자동 재축약) |
+| 편집기 | 캔바식 슬라이드 편집 — 드래그 이동/크기 조절/텍스트 편집/테마/슬라이드 추가·삭제·순서 변경/실행취소 |
+| 공유 | 공개 전환 시 로그인 없이 볼 수 있는 슬라이드 링크, PDF 내보내기 |
+| 보관함 | 포트폴리오·이력서·자소서 종류별 탭 |
+
+### 신뢰성 설계
+
+- AI가 로그에 없는 사실·수치를 만들지 않도록 프롬프트 가드레일 + 후처리(sanitize)
+- AI 호출 실패 시 조용히 숨기지 않고 **로컬 초안으로 대체하며 화면에 배너로 명시**
+- 생성 결과는 자동 저장하지 않고 사용자가 검토 후 저장, 저장 전 이탈 시 경고
+- 모든 데이터는 Supabase RLS로 사용자별 격리, 조회 쿼리에도 `user_id`를 명시
+
+## 기술 스택
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui · Supabase (Postgres/Auth/RLS) · Google Gemini API · Vercel
 
 ## 시작하기
 
@@ -29,39 +41,38 @@ npm run dev
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=       # Supabase 프로젝트 URL (경로 없이 base URL만)
-NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Supabase anon/publishable key
-GEMINI_API_KEY=                 # Google AI Studio에서 발급 (무료 티어 가능)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Supabase publishable key
+GEMINI_API_KEY=                 # Google AI Studio에서 발급 (서버 전용)
 GITHUB_TOKEN=                   # 선택, GitHub API rate limit 상향용
 ```
 
-Supabase 스키마는 [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql)을 프로젝트 SQL Editor에서 실행하면 된다. `GEMINI_API_KEY`가 없거나 호출이 실패하면 AI 생성 요청이 로컬 폴백 초안으로 대체되고 화면에 배너가 표시된다.
+### DB 마이그레이션
+
+Supabase SQL Editor에서 [`supabase/migrations`](supabase/migrations)의 파일을 번호 순서대로 실행합니다.
+
+| 파일 | 내용 |
+|---|---|
+| `0001_init.sql` | profiles / projects / logs / portfolios + RLS |
+| `0002_outputs.sql` | 이력서·자소서 저장용 `kind`, `meta` |
+| `0003_project_description.sql` | 프로젝트 소개 |
+| `0004_slide_layout.sql` | 슬라이드 편집기 레이아웃 저장 |
 
 ## 폴더 구조
 
 ```
 src/
 ├── app/
-│   ├── (auth)/login, (auth)/signup       # 이메일/비밀번호 인증
-│   ├── (app)/layout.tsx                  # 세션 게이트 + 공통 헤더(로그아웃)
-│   ├── (app)/page.tsx                    # 메인 화면 (기록+캘린더+GitHub임포트+AI생성)
-│   └── api/
-│       ├── github/commits/route.ts       # GitHub 커밋 조회 프록시
-│       └── portfolio/generate/route.ts   # Gemini 호출 (STAR/XYZ 생성 + 폴백)
-├── hooks/use-log-store.ts                # Supabase 기반 데이터 계층 (로그/포트폴리오 CRUD)
-├── lib/
-│   ├── supabase/{server,client,middleware,mappers}.ts
-│   ├── gemini/client.ts
-│   ├── actions/auth.ts                   # 로그인/회원가입/로그아웃 서버 액션
-│   ├── ai/
-│   │   ├── prompts/portfolioStarXyz.ts   # STAR/XYZ 프롬프트 (원본 이식)
-│   │   ├── generatePortfolio.ts          # Gemini 호출 + sanitize
-│   │   └── localDraft.ts                 # AI 실패 시 폴백 초안 생성
-│   └── types.ts
-└── components/
-    ├── auth/LogoutButton.tsx
-    ├── calendar/  (LogCalendar, DayLogForm)
-    ├── github/    (RepoImportForm, CommitList)
-    └── portfolio/ (GenerateButton, PortfolioViewer)
+│   ├── (auth)/            로그인·회원가입
+│   ├── (app)/             세션 게이트 + 공통 헤더/프로젝트 바
+│   │   ├── page.tsx       기록 (캘린더, GitHub 임포트, 프로젝트 소개)
+│   │   ├── studio/        AI 스튜디오 (생성·통합·공고맞춤·이력서·자소서)
+│   │   └── library/       보관함 + [id]/edit 슬라이드 편집기
+│   ├── share/[id]/        공개 공유 페이지 (로그인 불필요)
+│   └── api/               github/commits, portfolio/*, resume, cover-letter
+├── components/            calendar, github, portfolio(+editor), project, share, onboarding …
+├── hooks/                 use-projects, use-log-store, use-portfolio-editor …
+└── lib/
+    ├── ai/                프롬프트, Gemini 호출, 폴백 초안, sanitize
+    ├── supabase/          server/client/middleware/mappers
+    └── slideLayout.ts     편집기 레이아웃 모델
 ```
-
-`hooks/use-log-store.ts`는 사용자당 "기본 프로젝트" 하나를 자동으로 찾거나 만들고, 그 프로젝트의 로그/포트폴리오를 브라우저의 Supabase 클라이언트로 직접 CRUD한다 (RLS가 사용자별 접근을 강제). 멀티 프로젝트 대시보드는 이후 단계.
