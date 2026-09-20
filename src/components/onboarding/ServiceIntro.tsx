@@ -8,8 +8,8 @@ const STEPS = [
   },
   {
     icon: Sparkles,
-    title: "AI가 포트폴리오로 재구성",
-    desc: "STAR 형식으로 자동 정리",
+    title: "AI가 기록을 근거로 재구성",
+    desc: "STAR 형식으로 정리, 기록에 없는 내용은 쓰지 않아요",
   },
   {
     icon: Share2,
@@ -23,10 +23,10 @@ export function ServiceIntro() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-bold text-foreground">
-          기록이 쌓이면, AI가 포트폴리오가 됩니다
+          기억이 아니라, 매일 3줄 기록으로 쓰는 포트폴리오·이력서·자소서
         </h2>
         <p className="text-sm text-muted-foreground">
-          바쁘게 활동하느라 놓치기 쉬운 경험을, 매일 3줄로 붙잡아두세요.
+          지원할 때 기억을 쥐어짜지 마세요. AI는 내가 쌓은 기록에 있는 것만 씁니다.
         </p>
       </div>
 

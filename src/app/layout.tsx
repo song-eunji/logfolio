@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "로그폴리오",
-  description: "매일 3줄 기록이 AI가 만드는 포트폴리오가 됩니다.",
+  description: "기억이 아니라, 매일 3줄 기록으로 쓰는 포트폴리오·이력서·자소서.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -76,11 +76,11 @@ ${text}` : text;
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <section className="flex flex-col gap-1">
         <h1 className="text-xl font-bold text-foreground">
-          매일 3줄만 남기면, AI가 포트폴리오로 만들어드려요
+          기억이 아니라, 매일 3줄 기록으로 쓰는 포트폴리오·이력서·자소서
         </h1>
         <p className="text-sm text-muted-foreground">
-          {store.logs.length}개의 기록이 쌓였어요. 기록이 쌓일수록 더 풍부한
-          포트폴리오가 만들어집니다.
+          {store.logs.length}개의 기록이 쌓였어요. AI는 여기 쌓인 기록에 있는 것만
+          근거로 씁니다.
         </p>
       </section>
 
