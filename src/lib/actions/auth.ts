@@ -1,7 +1,30 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+export async function requestPasswordReset(input: { email: string }) {
+  const supabase = await createClient();
+  const h = await headers();
+  const origin = h.get("origin") ?? `https://${h.get("host")}`;
+  const { error } = await supabase.auth.resetPasswordForEmail(input.email, {
+    redirectTo: `${origin}/auth/callback?next=/update-password`,
+  });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function updatePassword(input: { password: string }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "재설정 링크가 만료됐어요. 비밀번호 찾기를 다시 진행해주세요." };
+  const { error } = await supabase.auth.updateUser({ password: input.password });
+  if (error) return { error: error.message };
+  return { error: null };
+}
 
 export async function signOut() {
   const supabase = await createClient();

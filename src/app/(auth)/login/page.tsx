@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -17,6 +17,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // 비밀번호 재설정 링크가 만료/잘못된 경우 콜백이 ?error=link_expired 로 돌려보낸다
+    if (new URLSearchParams(window.location.search).get("error") === "link_expired") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError("재설정 링크가 만료됐거나 올바르지 않아요. 비밀번호 찾기를 다시 진행해주세요.");
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,6 +99,12 @@ export default function LoginPage() {
               로그인
             </Button>
           </form>
+
+          <p className="-mt-3 text-center text-sm text-muted-foreground">
+            <Link href="/forgot-password" className="hover:text-foreground hover:underline">
+              비밀번호를 잊으셨나요?
+            </Link>
+          </p>
 
           <p className="text-center text-sm text-muted-foreground">
             아직 계정이 없으신가요?{" "}
