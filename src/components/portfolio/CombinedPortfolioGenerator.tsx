@@ -9,6 +9,7 @@ import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
 import { createClient } from "@/lib/supabase/client";
 import { mapLogRow, type LogRow } from "@/lib/supabase/mappers";
 import type { GenerationSource, Project } from "@/lib/types";
+import { useSessionState } from "@/hooks/use-session-state";
 
 export function CombinedPortfolioGenerator({
   projects,
@@ -25,12 +26,12 @@ export function CombinedPortfolioGenerator({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{
+  const [result, setResult] = useSessionState<{
     markdown: string;
     generationSource: GenerationSource;
     names: string[];
-  } | null>(null);
-  const [saved, setSaved] = useState(false);
+  } | null>("combined:result", null);
+  const [saved, setSaved] = useSessionState("combined:saved", false);
 
   function toggle(id: string) {
     setSelected((s) => {

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { LogEntry, Portfolio } from "@/lib/types";
 import type { Profile } from "@/hooks/use-profile";
+import { useSessionState } from "@/hooks/use-session-state";
 
 export function CoverLetterForm({
   logs,
@@ -24,14 +25,15 @@ export function CoverLetterForm({
     meta: { question: string; charLimit: number }
   ) => Promise<boolean>;
 }) {
-  const [question, setQuestion] = useState("");
-  const [charLimit, setCharLimit] = useState(500);
-  const [result, setResult] = useState<{ answer: string; charCount: number } | null>(
+  const [question, setQuestion] = useSessionState("cover:question", "");
+  const [charLimit, setCharLimit] = useSessionState("cover:charLimit", 500);
+  const [result, setResult] = useSessionState<{ answer: string; charCount: number } | null>(
+    "cover:result",
     null
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useSessionState("cover:saved", false);
 
   async function handleGenerate() {
     if (!question.trim()) return;
@@ -138,16 +140,23 @@ export function CoverLetterForm({
               {result.charCount}자 / {charLimit}자
               {overLimit && " (제한 초과)"}
             </span>
-            <Button
-              onClick={handleSave}
-              disabled={saved}
-              size="sm"
-              variant="secondary"
-              className="gap-1.5"
-            >
-              <Save className="size-3.5" />
-              {saved ? "저장됨" : "저장"}
-            </Button>
+            <div className="flex items-center gap-3">
+              {!saved && (
+                <span className="text-xs text-muted-foreground">
+                  저장을 눌러야 보관함에 남아요
+                </span>
+              )}
+              <Button
+                onClick={handleSave}
+                disabled={saved}
+                size="sm"
+                variant="secondary"
+                className="gap-1.5"
+              >
+                <Save className="size-3.5" />
+                {saved ? "저장됨" : "저장"}
+              </Button>
+            </div>
           </div>
         </div>
       )}

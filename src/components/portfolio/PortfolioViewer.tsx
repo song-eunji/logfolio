@@ -31,10 +31,17 @@ export function PortfolioViewer({
       <SlideViewer content={markdown} heading="미리보기" />
 
       {onSave && (
-        <Button onClick={onSave} disabled={saved} className="self-end gap-1.5">
-          <Save className="size-4" />
-          {saved ? "저장됨" : "포트폴리오 저장"}
-        </Button>
+        <div className="flex items-center justify-end gap-3">
+          {!saved && (
+            <span className="text-xs text-muted-foreground">
+              저장을 눌러야 보관함에 남아요
+            </span>
+          )}
+          <Button onClick={onSave} disabled={saved} className="gap-1.5">
+            <Save className="size-4" />
+            {saved ? "저장됨" : "포트폴리오 저장"}
+          </Button>
+        </div>
       )}
     </div>
   );

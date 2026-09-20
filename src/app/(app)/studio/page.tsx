@@ -16,6 +16,7 @@ import { useLogStore } from "@/hooks/use-log-store";
 import { useProfile } from "@/hooks/use-profile";
 import { useProjectsContext } from "@/components/project/ProjectsProvider";
 import { useAllUserOutputs } from "@/hooks/use-all-outputs";
+import { useSessionState } from "@/hooks/use-session-state";
 import type { GenerationSource } from "@/lib/types";
 
 export default function StudioPage() {
@@ -32,14 +33,14 @@ export default function StudioPage() {
   const allOutputs = useAllUserOutputs(refreshKey);
   const bump = () => setRefreshKey((k) => k + 1);
 
-  const [generationState, setGeneration] = useState<{
+  const [generationState, setGeneration] = useSessionState<{
     projectId: string;
     markdown: string;
     generationSource: GenerationSource;
-  } | null>(null);
+  } | null>("portfolio:result", null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useSessionState("portfolio:saved", false);
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
   // 다른 프로젝트에서 만든 결과가 새 프로젝트로 잘못 저장되지 않도록 프로젝트가 같을 때만 보여준다

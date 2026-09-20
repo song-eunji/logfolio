@@ -14,6 +14,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import type { Portfolio } from "@/lib/types";
 import type { Profile } from "@/hooks/use-profile";
+import { useSessionState } from "@/hooks/use-session-state";
 
 export function ResumeGenerator({
   portfolios,
@@ -25,10 +26,10 @@ export function ResumeGenerator({
   onSave: (content: string, sourcePortfolioId: string) => Promise<boolean>;
 }) {
   const [selectedId, setSelectedId] = useState<string>(portfolios[0]?.id ?? "");
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useSessionState<string | null>("resume:result", null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useSessionState("resume:saved", false);
 
   useEffect(() => {
     // portfolios는 비동기로 나중에 채워지거나(전체 프로젝트 fetch), 새로 저장되어
@@ -145,16 +146,23 @@ export function ResumeGenerator({
           <article className="prose prose-sm max-w-none prose-li:text-foreground">
             <ReactMarkdown>{result}</ReactMarkdown>
           </article>
-          <Button
-            onClick={handleSave}
-            disabled={saved}
-            size="sm"
-            variant="secondary"
-            className="self-end gap-1.5"
-          >
-            <Save className="size-3.5" />
-            {saved ? "저장됨" : "저장"}
-          </Button>
+          <div className="flex items-center justify-end gap-3">
+            {!saved && (
+              <span className="text-xs text-muted-foreground">
+                저장을 눌러야 보관함에 남아요
+              </span>
+            )}
+            <Button
+              onClick={handleSave}
+              disabled={saved}
+              size="sm"
+              variant="secondary"
+              className="gap-1.5"
+            >
+              <Save className="size-3.5" />
+              {saved ? "저장됨" : "저장"}
+            </Button>
+          </div>
         </div>
       )}
     </div>

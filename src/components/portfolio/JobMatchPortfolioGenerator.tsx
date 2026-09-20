@@ -16,6 +16,7 @@ import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
 import { createClient } from "@/lib/supabase/client";
 import { mapLogRow, type LogRow } from "@/lib/supabase/mappers";
 import type { Project } from "@/lib/types";
+import { useSessionState } from "@/hooks/use-session-state";
 
 export function JobMatchPortfolioGenerator({
   projects,
@@ -25,21 +26,23 @@ export function JobMatchPortfolioGenerator({
   onSave: (content: string, projectName: string, jobPostingExcerpt: string) => Promise<boolean>;
 }) {
   const [supabaseClient] = useState(() => createClient());
-  const [selectedId, setSelectedId] = useState<string>(projects[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useSessionState<string>(
+    "jobmatch:projectId",
+    projects[0]?.id ?? ""
+  );
 
   useEffect(() => {
     if (!projects.some((p) => p.id === selectedId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedId(projects[0]?.id ?? "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects]);
 
-  const [jobPosting, setJobPosting] = useState("");
+  const [jobPosting, setJobPosting] = useSessionState("jobmatch:posting", "");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [result, setResult] = useSessionState<string | null>("jobmatch:result", null);
+  const [saved, setSaved] = useSessionState("jobmatch:saved", false);
 
   if (projects.length === 0) return null;
 
