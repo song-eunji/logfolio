@@ -29,9 +29,6 @@ export default async function AppLayout({
               <span className="text-2xl font-extrabold text-foreground">
                 Logfolio
               </span>
-              <span className="ml-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground">
-                BETA
-              </span>
             </div>
             <div className="flex items-center gap-3">
               {user.is_anonymous ? (

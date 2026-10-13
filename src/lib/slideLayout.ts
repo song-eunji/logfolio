@@ -101,6 +101,19 @@ export function blockId(slideId: string, key: BlockKey) {
 }
 
 /**
+ * "주요 활동"처럼 본문 없이 제목만 있는 구분 슬라이드는, 바로 뒤따르는 하위(###) 슬라이드들의
+ * 제목을 목록으로 채워 목차처럼 보이게 한다. 뒤따르는 하위 슬라이드가 없으면 빈 문자열.
+ */
+function sectionOutline(slides: Slide[], index: number, deleted: Set<string>): string {
+  if (slides[index].level !== 2) return "";
+  const titles: string[] = [];
+  for (let j = index + 1; j < slides.length && slides[j].level === 3; j++) {
+    if (!deleted.has(`orig-${j}`) && slides[j].title) titles.push(`- ${slides[j].title}`);
+  }
+  return titles.join("\n");
+}
+
+/**
  * 원본 마크다운에서 잘라낸 슬라이드(splitIntoSlides)와 저장된 레이아웃(순서/삭제/커스텀 슬라이드)을
  * 합쳐 편집기·뷰어가 함께 쓰는 "현재 보여줄 슬라이드 목록"을 만든다.
  */
@@ -114,7 +127,7 @@ export function resolveEditableSlides(
     .map((s, i) => ({
       id: `orig-${i}`,
       title: s.title,
-      body: s.body,
+      body: s.body.trim() ? s.body : sectionOutline(markdownSlides, i, deleted),
       isCustom: false,
       kind: classifySlideKind(s),
     }))
